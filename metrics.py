@@ -4,7 +4,7 @@ from util import *
 from collections import defaultdict
 
 
-def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
+def cal_mteval(path_refs, path_hyp, fld_out='temp', n_line=None):
 	# call NIST script: mteval-v14c.pl
 	# you may need to cpan install XML:Twig Sort:Naturally String:Util 
 
@@ -17,7 +17,7 @@ def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 	_write_xml(path_refs, fld_out + '/ref.xml', 'ref', n_line=n_line)
 
 	time.sleep(1)
-	cmd = 'perl mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
+	cmd = 'perl 3rdparty/mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
 	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
 
@@ -35,7 +35,7 @@ def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 	return [float(x) for x in nist], [float(x) for x in bleu]
 
 
-def cal_bleu(path_refs, path_hyp):
+def cal_multibleu(path_refs, path_hyp):
 	# call Moses script: multi-bleu.pl
 
 	process = subprocess.Popen(
@@ -53,10 +53,8 @@ def cal_bleu(path_refs, path_hyp):
 	return n_line, output.decode().strip('\n')
 
 
-
 def cal_entropy(path_hyp, n_line=None):
 	# based on Yizhe Zhang's code
-
 	etp_score = [0.0,0.0,0.0,0.0]
 	counter = [defaultdict(int),defaultdict(int),defaultdict(int),defaultdict(int)]
 	i = 0
@@ -78,8 +76,6 @@ def cal_entropy(path_hyp, n_line=None):
 	return etp_score
 
 
-
-
 def cal_len(path, n_line):
 	l = []
 	for line in open(path, encoding='utf8'):
@@ -89,13 +85,27 @@ def cal_len(path, n_line):
 	return np.mean(l)
 
 
+def cal_diversity(path_hyp):
+	tokens = [0.0,0.0]
+	types = [defaultdict(int),defaultdict(int)]
+	for line in open(path_hyp, encoding='utf-8'):
+		words = line.strip('\n').split()
+		for n in range(2):
+			for idx in range(len(words)-n):
+				ngram = ' '.join(words[idx:idx+n+1])
+				types[n][ngram] = 1
+				tokens[n] += 1
+	div1 = len(types[0].keys())/tokens[0]
+	div2 = len(types[1].keys())/tokens[1]
+	return div1, div2
+
+
 def cal_all(path_refs, path_hyp, fld_out='temp', n_line=None):
-	nist, bleu = cal_nist(path_refs, path_hyp, fld_out, n_line)
+	nist, bleu = cal_mteval(path_refs, path_hyp, fld_out, n_line)
 	entropy = cal_entropy(path_hyp, n_line)
+	div1, div2 = cal_diversity(path_hyp)
 	avg_len = cal_len(path_hyp, n_line)
-	return nist, bleu, entropy, avg_len
-
-
+	return nist, bleu, entropy, div1, div2, avg_len
 
 
 def _write_xml(paths_in, path_out, role, n_line=None):
