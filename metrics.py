@@ -66,13 +66,15 @@ def calc_meteor(path_merged_refs, path_hyp, n_refs):
 	# Call METEOR code.
 	# http://www.cs.cmu.edu/~alavie/METEOR/index.html
 	#java -jar meteor-1.5.jar hyp.txt multiref.txt -r 6 -l en -norm
-	process = subprocess.Popen(['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', n_refs, '-l', 'en', '-norm'], stdout=subprocess.PIPE)
-	with open(path_hyp, encoding='utf-8') as f:
-		lines = f.readlines()
-	for line in lines:
-		process.stdin.write(line.encode())
-	output, error = process.communicate()
-	return output.decode()
+	#process = subprocess.Popen(['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', n_refs, '-l', 'en', '-norm'], stdout=subprocess.PIPE)
+	#with open(path_hyp, encoding='utf-8') as f:
+	#	lines = f.readlines()
+	#for line in lines:
+	#	process.stdin.write(line.encode())
+	#output, error = process.communicate()
+	#return output.decode()
+	return 0
+
 
 def calc_entropy(path_hyp, n_lines=None):
 	# based on Yizhe Zhang's code
@@ -124,8 +126,7 @@ def calc_diversity(path_hyp):
 
 def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=1, n_lines=None):
 	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
-	meteor = 0
-	#meteor = calc_meteor(path_merged_refs, path_hyp, n_refs=n_refs) # TODO
+	meteor = calc_meteor(path_merged_refs, path_hyp, n_refs=n_refs)
 	entropy = calc_entropy(path_hyp, n_lines)
 	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_lines)

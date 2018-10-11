@@ -71,8 +71,8 @@ def eval_one_system(submitted,
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_%s_cleaned'%clean
-	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
-	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
+	path_hyp, path_refs, path_merged_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
+	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_lines=n_lines)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
 
