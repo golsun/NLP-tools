@@ -72,6 +72,8 @@ def eval_a_system(submitted,
 
 
 def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False, n_line=None):
+	# evaluate all systems (*.txt) in `fld`
+
 	path_out = fld + '/report'
 	if clean:
 		path_out + '_cleaned'
