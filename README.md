@@ -6,8 +6,8 @@ from metrics import nlp_metrics
 nist, bleu, entropy, avg_len = nlp_metrics(
 	  path_refs=["demo/ref0.txt", "demo/ref1.txt"], 
 	  path_hyp="demo/hyp.txt")
-# nist = [1.0633, 1.1258, 1.1258, 1.1258]
-# bleu = [0.3158, 0.2433, 0.2088, 0.1737]
+# nist = [1.8338, 2.0838, 2.1949, 2.1949]
+# bleu = [0.4667, 0.441, 0.4017, 0.3224]
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
 # avg_len = 5.0000
 ```
