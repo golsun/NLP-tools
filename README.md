@@ -1,6 +1,3 @@
-# Tokenization
-* comming soon...
-
 # Evaluation
 compute the following automated metrics for natural language generation 
 * BLEU
