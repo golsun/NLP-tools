@@ -1,6 +1,6 @@
 # What does it do?
 provides easy Python ways to
-* calculate automated NLP evaluation metrics (BLEU, NIST, entropy, etc...)
+*  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
 ```python
 from metrics import cal_all
 nist, bleu, entropy, avg_len = cal_all(
@@ -11,7 +11,14 @@ nist, bleu, entropy, avg_len = cal_all(
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
 # avg_len = 5.0000
 ```
-* and more...
+* **tokenizatioin** clean string and deal with punctation, contraction, url, mention, tag, etc
+```python
+s = " I don't know:). how about this??https://github.com"
+gentle_clean(s)
+# i do n't know :) . how about this ? ? __url__
+heavy_clean(s)
+# i don t know how about this __url__
+```
 
 # Requirement
 please download [mteval-v14c.pl](https://goo.gl/YUFajQ) and install the following perl modules (e.g. by `cpan install`)
