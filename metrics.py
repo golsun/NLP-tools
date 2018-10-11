@@ -119,7 +119,7 @@ def calc_diversity(path_hyp):
 				tokens[n] += 1
 	div1 = len(types[0].keys())/tokens[0]
 	div2 = len(types[1].keys())/tokens[1]
-	return div1, div2
+	return [div1, div2]
 
 
 def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=1, n_lines=None):

@@ -22,12 +22,17 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 		os.makedirs(fld_out)
 
 	def _clean(s):
-		if clean:
+		if clean == 'heavy':
+			return heavy_clean(s)
+		elif clean = 'light':
 			return clean_str(s)
 		else:
 			return s
 
 	keys = sorted(cells_hyp.keys())
+	with open(fld_out + '/hash.txt', 'w', encoding='utf-8') as f:
+		f.write(unicode('\n'.join(keys)))
+
 	lines = [_clean(cells_hyp[k][-1]) for k in keys]
 	path_hyp = fld_out + '/hyp.txt'
 	with open(path_hyp, 'w', encoding='utf-8') as f:
@@ -61,7 +66,7 @@ def eval_one_system(submitted,
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
 	clean=False):
 
-	print(submitted)
+	print('evaluating '+submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
@@ -85,9 +90,10 @@ def eval_one_system(submitted,
 def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None):
 	# evaluate all systems (*.txt) in `fld`
 
+	print('clean = '+str(clean))
 	path_out = fld + '/report'
 	if clean:
-		path_out + '_cleaned'
+		path_out += '_cleaned'
 	path_out += '.tsv'
 	with open(path_out, 'w') as f:
 		f.write('\t'.join(
@@ -102,6 +108,7 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 		if fname.endswith('.txt'):
 			submitted = fld + '/' + fname
 			results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines)
+			print()
 			with open(path_out, 'a') as f:
 				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
@@ -112,7 +119,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--submitted', '-s', default='')
 	parser.add_argument('--submitted_fld', '-f', default='')
-	parser.add_argument('--clean', '-c', action='store_true', default=False)
+	parser.add_argument('--clean', '-c', default='no')
 	parser.add_argument('--n_lines', '-n', type=int, default=-1)
 	args = parser.parse_args()
 
