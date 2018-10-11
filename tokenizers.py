@@ -1,22 +1,11 @@
+# author: Xiang Gao @ Microsoft Research
+# Oct 2018
+
 from util import *
 from nltk.tokenize import TweetTokenizer
 
-def heavy_clean(txt):
-	txt = txt.lower()
-	words = []
-	for word in txt.split():
-		i = word.find('http') 
-		if i >= 0:
-			words.append(word[:i] + ' ' + 'URL')
-		else:
-			words.append(word)
 
-	s = ' '.join(words)
-	s = re.sub(r"[^A-Za-z0-9 ]", " ", s)
-	return ' '.join(s.replace('URL','__url__').split())
-
-
-def gentle_clean(txt):
+def clean_str(txt):
 	txt = txt.lower()
 
 	# url and tag
@@ -59,13 +48,16 @@ def clean_twitter(txt):
 
 	txt = txt.replace('>',' ')		# a symbol never showing in reddit
 	txt = txt.replace('#N#',' ')
-	return gentle_clean(txt)
+	return clean_str(txt)
 
 
 def clean_reddit(txt):
 	txt = txt.lower().replace('r/','')
-	return gentle_clean(txt)
+	return clean_str(txt)
+
 
 if __name__ == '__main__':
-	s = " I don't know. how about this?https://github.com/golsun/deep-RL-time-series"
-	print(heavy_clean(s))
+	s = " I don't know:). how about this?https://github.com/golsun/deep-RL-time-series"
+	s = "they're also the biggest shareholder of apple , 2 % if i remember correctly . edit : 2.6 % https://en.wikipedia.org/wiki/List_of_assets_owned_by_Berkshire_Hathaway"
+	s_c = clean_str(s)
+	print(s_c)
