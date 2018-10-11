@@ -49,22 +49,22 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 
 def eval_a_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, n_line=None,
-	clean=False):
-
-	print('evaluating '+submitted)
+	clean=False, PRINT=True):
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_cleaned'
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
-	nist, bleu, entropy, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
+	nist, bleu, entropy, div1, div2, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
+	if PRINT:
+		print(submitted)
+		print('NIST = '+str(nist))
+		print('BLEU = '+str(bleu))
+		print('entropy = '+str(entropy))
+		print('diversity = ' + str([div1, div2]))
+		print('avg_len = '+str(avg_len))
 
-	print('NIST = '+str(nist))
-	print('BLEU = '+str(bleu))
-	print('entropy = '+str(entropy))
-	print('avg_len = '+str(avg_len))
-
-	return nist + bleu + entropy + [avg_len]
+	return nist + bleu + entropy + [div1, div2, avg_len]
 
 
 def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False):
@@ -78,7 +78,7 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 			['nist%i'%i for i in range(1, 4+1)] + \
 			['bleu%i'%i for i in range(1, 4+1)] + \
 			['entropy%i'%i for i in range(1, 4+1)] +\
-			['avg_len']) + '\n')
+			['div1','div2','avg_len']) + '\n')
 
 	for fname in os.listdir(fld):
 		if fname.endswith('.txt'):

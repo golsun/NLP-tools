@@ -1,6 +1,5 @@
-# author: Xiang Gao @ Microsoft Research, Oct 2018
-# compute automated NLP evaluation metrics
-
+# author: Xiang Gao @ Microsoft Research
+# Oct 2018
 from util import *
 from collections import defaultdict
 
@@ -19,7 +18,7 @@ def cal_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
 	_write_xml(path_refs, fld_out + '/ref.xml', 'ref', n_line=n_line)
 
 	time.sleep(1)
-	cmd = 'perl mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
+	cmd = 'perl 3rdparty/mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
 	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
 
@@ -45,7 +44,7 @@ def cal_cum_bleu(path_refs, path_hyp):
 	# furthermore, this func doesn't support n_line argument
 
 	process = subprocess.Popen(
-			['perl', 'multi-bleu.perl'] + path_refs, 
+			['perl', '3rdparty/multi-bleu.perl'] + path_refs, 
 			stdout=subprocess.PIPE, 
 			stdin=subprocess.PIPE
 			)
@@ -57,10 +56,8 @@ def cal_cum_bleu(path_refs, path_hyp):
 	return output.decode()
 
 
-
 def cal_entropy(path_hyp, n_line=None):
 	# based on Yizhe Zhang's code
-
 	etp_score = [0.0,0.0,0.0,0.0]
 	counter = [defaultdict(int),defaultdict(int),defaultdict(int),defaultdict(int)]
 	i = 0
@@ -82,7 +79,7 @@ def cal_entropy(path_hyp, n_line=None):
 	return etp_score
 
 
-def cal_len(path, n_line=None):
+def cal_len(path, n_line):
 	l = []
 	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
@@ -91,17 +88,30 @@ def cal_len(path, n_line=None):
 	return np.mean(l)
 
 
+def cal_diversity(path_hyp):
+	tokens = [0.0,0.0]
+	types = [defaultdict(int),defaultdict(int)]
+	for line in open(path_hyp, encoding='utf-8'):
+		words = line.strip('\n').split()
+		for n in range(2):
+			for idx in range(len(words)-n):
+				ngram = ' '.join(words[idx:idx+n+1])
+				types[n][ngram] = 1
+				tokens[n] += 1
+	div1 = len(types[0].keys())/tokens[0]
+	div2 = len(types[1].keys())/tokens[1]
+	return div1, div2
+
+
 def nlp_metrics(path_refs, path_hyp, fld_out='temp', n_line=None):
 	nist, bleu = cal_nist_bleu(path_refs, path_hyp, fld_out, n_line)
 	entropy = cal_entropy(path_hyp, n_line)
+	div1, div2 = cal_diversity(path_hyp)
 	avg_len = cal_len(path_hyp, n_line)
-	return nist, bleu, entropy, avg_len
+	return nist, bleu, entropy, div1, div2, avg_len
 
 
 def _write_xml(paths_in, path_out, role, n_line=None):
-	# convert text files to xml files required by mteval-v14c.pl
-	# role should be one of ['src','hyp','ref']
-	# for input files (paths_in, a list), each line is an utterance. see demo/*.txt for examples
 
 	lines = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
@@ -157,4 +167,3 @@ def _write_xml(paths_in, path_out, role, n_line=None):
 	lines.append('</mteval>')
 	with open(path_out, 'w', encoding='utf-8') as f:
 		f.write(unicode('\n'.join(lines)))
-
