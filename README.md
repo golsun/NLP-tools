@@ -11,13 +11,11 @@ nist, bleu, entropy, avg_len = cal_all(
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
 # avg_len = 5.0000
 ```
-* **tokenizatioin** clean string and deal with punctation, contraction, url, mention, tag, etc
+* **tokenizatioin**: clean string and deal with punctation, contraction, url, mention, tag, etc
 ```python
 s = " I don't know:). how about this??https://github.com"
 gentle_clean(s)
 # i do n't know :) . how about this ? ? __url__
-heavy_clean(s)
-# i don t know how about this __url__
 ```
 
 # Requirement
