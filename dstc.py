@@ -24,7 +24,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 	def _clean(s):
 		if clean == 'heavy':
 			return heavy_clean(s)
-		elif clean = 'light':
+		elif clean == 'light':
 			return clean_str(s)
 		else:
 			return s
