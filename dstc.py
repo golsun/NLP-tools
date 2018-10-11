@@ -40,22 +40,19 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6):
 	return path_hyp, path_refs
 
 
-def eval_a_system(submitted, n_line=None):
+def eval_a_system(submitted, 
+	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, n_line=None):
 
-	n_ref = 6
-	multi_ref = 'dstc/test.refs'
-	keys = 'dstc/keys.2k.txt'
+	
 	fld_out = submitted.replace('.txt','')
-
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref)
 	nist, bleu, entropy, avg_len = cal_all(path_refs, path_hyp, fld_out, n_line=n_line)
 	print(submitted)
-	print('NIST = '+str(NIST))
-	print('BLEU = '+str(BLEU))
+	print('NIST = '+str(nist))
+	print('BLEU = '+str(bleu))
 	print('entropy = '+str(entropy))
 	print('avg_len = '+str(avg_len))
 	return nist + bleu + entropy + [avg_len]
-
 
 
 if __name__ == '__main__':
@@ -63,8 +60,4 @@ if __name__ == '__main__':
 		submitted = sys.argv[1]
 	else:
 		submitted = 'dstc/baseline/primary.txt'
-	if len(sys.argv)>2:
-		n_line = int(sys.argv[2])
-	else:
-		n_line = None
-	eval_a_system(submitted, n_line)
+	eval_a_system(submitted)

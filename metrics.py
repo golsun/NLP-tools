@@ -18,7 +18,6 @@ def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 
 	time.sleep(1)
 	cmd = 'perl mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
-	print(cmd)
 	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
 
@@ -28,6 +27,7 @@ def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 		bleu = lines[-4].strip('\r').split()[1:5]
 	except Exception:
 		print('mteval-v14c.pl returns unexpected message')
+		print('cmd = '+cmd)
 		print(output)
 		print(error)
 		exit()
