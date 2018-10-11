@@ -23,7 +23,7 @@ clean_str(s)
 ```
 
 # Requirement
-please download [mteval-v14c.pl](https://goo.gl/YUFajQ) and install the following perl modules (e.g. by `cpan install`)
+please download [mteval-v14c.pl](https://goo.gl/YUFajQ), save it in a new folder `3rdparty`, and install the following perl modules (e.g. by `cpan install`)
 * XML:Twig
 * Sort:Naturally
 * String:Util 
