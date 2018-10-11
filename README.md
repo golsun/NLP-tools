@@ -10,7 +10,7 @@ nist, bleu = cal_nist(['demo/ref.txt'], 'demo/hyp.txt')
 * and more...
 
 # Requirement
-please download [mteval-v14c.pl](ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14c.pl) and save in the folder where eval.py lives. You may need to install the following perl modules (e.g. by cpan install)
+please download [mteval-v14c.pl](ftp://jaguar.ncsl.nist.gov/mt/resources) and save in the folder where eval.py lives. You may need to install the following perl modules (e.g. by cpan install)
 * XML:Twig
 * Sort:Naturally
 * String:Util 
