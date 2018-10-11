@@ -70,19 +70,11 @@ def eval_one_system(submitted,
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
-<<<<<<< HEAD
-		fld_out += '_cleaned'
-	path_hyp, path_refs, path_merged_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
-	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_refs=n_refs, n_lines=n_lines)
+		fld_out += '_%s_cleaned'%clean
+	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
+	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
-=======
-		fld_out += '_%s_cleaned'%clean
-	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
-	nist, bleu, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
-	if n_line is None:
-		n_line = len(open(path_hyp, encoding='utf-8').readlines())
->>>>>>> 0e1714fb50a734951a72ae0d42ba0b8cf24719ca
 
 	print('n_lines = '+str(n_lines))
 	print('NIST = '+str(nist))
