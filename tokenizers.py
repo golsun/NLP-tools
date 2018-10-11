@@ -1,5 +1,5 @@
-# author: Xiang Gao @ Microsoft Research
-# Oct 2018
+# author: Xiang Gao @ Microsoft Research, Oct 2018
+# clean and tokenize natural language text
 
 from util import *
 from nltk.tokenize import TweetTokenizer

@@ -1,5 +1,6 @@
-# author: Xiang Gao @ Microsoft Research
-# Oct 2018
+# author: Xiang Gao @ Microsoft Research, Oct 2018
+# compute NLP evaluation metrics
+
 from util import *
 from collections import defaultdict
 
@@ -94,6 +95,7 @@ def calc_len(path, n_line):
 
 
 def calc_diversity(path_hyp):
+	# by Michel Galley
 	tokens = [0.0,0.0]
 	types = [defaultdict(int),defaultdict(int)]
 	for line in open(path_hyp, encoding='utf-8'):

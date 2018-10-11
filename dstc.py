@@ -1,3 +1,6 @@
+# author: Xiang Gao @ Microsoft Research, Oct 2018
+# evaluate DSTC-task2 submissions. https://github.com/DSTC-MSR-NLP/DSTC7-End-to-End-Conversation-Modeling
+
 from metrics import *
 from tokenizers import *
 
