@@ -5,18 +5,18 @@ from util import *
 from collections import defaultdict
 
 
-def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
+def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_lines=None):
 	# call NIST script: mteval-v14c.pl
 	# ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14c.pl
 	# you may need to cpan install XML:Twig Sort:Naturally String:Util 
 
 	makedirs(fld_out)
 
-	if n_line is None:
-		n_line = len(open(path_hyp, encoding='utf-8').readlines())	
-	_write_xml([''], fld_out + '/src.xml', 'src', n_line=n_line)
-	_write_xml([path_hyp], fld_out + '/hyp.xml', 'hyp', n_line=n_line)
-	_write_xml(path_refs, fld_out + '/ref.xml', 'ref', n_line=n_line)
+	if n_lines is None:
+		n_lines = len(open(path_hyp, encoding='utf-8').readlines())	
+	_write_xml([''], fld_out + '/src.xml', 'src', n_lines=n_lines)
+	_write_xml([path_hyp], fld_out + '/hyp.xml', 'hyp', n_lines=n_lines)
+	_write_xml(path_refs, fld_out + '/ref.xml', 'ref', n_lines=n_lines)
 
 	time.sleep(1)
 	cmd = [
@@ -47,7 +47,7 @@ def calc_cum_bleu(path_refs, path_hyp):
 	# https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl
 	# the 4-gram cum BLEU returned by this one should be very close to calc_nist_bleu
 	# however multi-bleu.pl doesn't return cum BLEU of lower rank, so in nlp_metrics we preferr calc_nist_bleu
-	# furthermore, this func doesn't support n_line argument
+	# furthermore, this func doesn't support n_lines argument
 
 	process = subprocess.Popen(
 			['perl', '3rdparty/multi-bleu.perl'] + path_refs, 
@@ -62,7 +62,21 @@ def calc_cum_bleu(path_refs, path_hyp):
 	return output.decode()
 
 
-def calc_entropy(path_hyp, n_line=None):
+def calc_meteor(path_merged_refs, path_hyp, n_refs):
+	# Call METEOR code.
+	# http://www.cs.cmu.edu/~alavie/METEOR/index.html
+	#java -jar meteor-1.5.jar hyp.txt multiref.txt -r 6 -l en -norm
+	#process = subprocess.Popen(['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', n_refs, '-l', 'en', '-norm'], stdout=subprocess.PIPE)
+	#with open(path_hyp, encoding='utf-8') as f:
+	#	lines = f.readlines()
+	#for line in lines:
+	#	process.stdin.write(line.encode())
+	#output, error = process.communicate()
+	#return output.decode()
+	return 0
+
+
+def calc_entropy(path_hyp, n_lines=None):
 	# based on Yizhe Zhang's code
 	etp_score = [0.0,0.0,0.0,0.0]
 	counter = [defaultdict(int),defaultdict(int),defaultdict(int),defaultdict(int)]
@@ -74,7 +88,7 @@ def calc_entropy(path_hyp, n_line=None):
 			for idx in range(len(words)-n):
 				ngram = ' '.join(words[idx:idx+n+1])
 				counter[n][ngram] += 1
-		if i == n_line:
+		if i == n_lines:
 			break
 
 	for n in range(4):
@@ -85,11 +99,11 @@ def calc_entropy(path_hyp, n_line=None):
 	return etp_score
 
 
-def calc_len(path, n_line):
+def calc_len(path, n_lines):
 	l = []
 	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
-		if len(l) == n_line:
+		if len(l) == n_lines:
 			break
 	return np.mean(l)
 
@@ -110,15 +124,16 @@ def calc_diversity(path_hyp):
 	return [div1, div2]
 
 
-def nlp_metrics(path_refs, path_hyp, fld_out='temp', n_line=None):
-	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_line)
-	entropy = calc_entropy(path_hyp, n_line)
+def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=1, n_lines=None):
+	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
+	meteor = calc_meteor(path_merged_refs, path_hyp, n_refs=n_refs)
+	entropy = calc_entropy(path_hyp, n_lines)
 	div = calc_diversity(path_hyp)
-	avg_len = calc_len(path_hyp, n_line)
-	return nist, bleu, entropy, div, avg_len
+	avg_len = calc_len(path_hyp, n_lines)
+	return nist, bleu, meteor, entropy, div, avg_len
 
 
-def _write_xml(paths_in, path_out, role, n_line=None):
+def _write_xml(paths_in, path_out, role, n_lines=None):
 
 	lines = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
@@ -148,12 +163,12 @@ def _write_xml(paths_in, path_out, role, n_line=None):
 		# body -----
 
 		if role == 'src':
-			body = [''] * n_line
+			body = [''] * n_lines
 		else:
 			with open(path_in, 'r', encoding='utf-8') as f:
 				body = f.readlines()
-			if n_line is not None:
-				body = body[:n_line]
+			if n_lines is not None:
+				body = body[:n_lines]
 		for i in range(len(body)):
 			line = body[i].strip('\n')
 			line = line.replace('&',' ').replace('<',' ')		# remove illegal xml char
