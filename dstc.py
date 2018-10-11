@@ -61,7 +61,7 @@ def eval_a_system(submitted,
 		print('NIST = '+str(nist))
 		print('BLEU = '+str(bleu))
 		print('entropy = '+str(entropy))
-                print('diversity = ' + str([div1, div2]))
+		print('diversity = ' + str([div1, div2]))
 		print('avg_len = '+str(avg_len))
 
 	return nist + bleu + entropy + [avg_len]
