@@ -70,11 +70,19 @@ def eval_one_system(submitted,
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
+<<<<<<< HEAD
 		fld_out += '_cleaned'
 	path_hyp, path_refs, path_merged_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
 	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_refs=n_refs, n_lines=n_lines)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
+=======
+		fld_out += '_%s_cleaned'%clean
+	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
+	nist, bleu, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
+	if n_line is None:
+		n_line = len(open(path_hyp, encoding='utf-8').readlines())
+>>>>>>> 0e1714fb50a734951a72ae0d42ba0b8cf24719ca
 
 	print('n_lines = '+str(n_lines))
 	print('NIST = '+str(nist))
@@ -117,10 +125,10 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--submitted', '-s', default='')
-	parser.add_argument('--submitted_fld', '-f', default='')
-	parser.add_argument('--clean', '-c', default='no')
-	parser.add_argument('--n_lines', '-n', type=int, default=-1)
+	parser.add_argument('--submitted', '-s', default='')		# eval a single file
+	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
+	parser.add_argument('--clean', '-c', default='no')			# 'no', 'light', or 'heavy'
+	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
 	args = parser.parse_args()
 
 	if args.n_lines < 0:
