@@ -23,11 +23,14 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 
 	def _clean(s):
 		if clean:
-			return clean_str(s)
+			return heavy_clean(s)
 		else:
 			return s
 
 	keys = sorted(cells_hyp.keys())
+	with open(fld_out + '/hash.txt', 'w', encoding='utf-8') as f:
+		f.write(unicode('\n'.join(keys)))
+
 	lines = [_clean(cells_hyp[k][-1]) for k in keys]
 	path_hyp = fld_out + '/hyp.txt'
 	with open(path_hyp, 'w', encoding='utf-8') as f:
@@ -54,7 +57,7 @@ def eval_a_system(submitted,
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, n_line=None,
 	clean=False):
 
-	print(submitted)
+	print('evaluating '+submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
@@ -77,9 +80,10 @@ def eval_a_system(submitted,
 def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False, n_line=None):
 	# evaluate all systems (*.txt) in `fld`
 
+	print('clean = '+str(clean))
 	path_out = fld + '/report'
 	if clean:
-		path_out + '_cleaned'
+		path_out += '_cleaned'
 	path_out += '.tsv'
 	with open(path_out, 'w') as f:
 		f.write('\t'.join(
@@ -94,6 +98,7 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 		if fname.endswith('.txt'):
 			submitted = fld + '/' + fname
 			results = eval_a_system(submitted, keys=keys, multi_ref=multi_ref, n_ref=n_ref, clean=clean, n_line=n_line)
+			print()
 			with open(path_out, 'a') as f:
 				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 

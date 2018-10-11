@@ -55,9 +55,14 @@ def clean_reddit(txt):
 	txt = txt.lower().replace('r/','')
 	return clean_str(txt)
 
+def heavy_clean(s):
+	s = clean_str(s)
+	s = re.sub(r"[^a-z0-9 ]", " ", s)
+	return ' '.join(s.split())
 
 if __name__ == '__main__':
 	s = " I don't know:). how about this?https://github.com/golsun/deep-RL-time-series"
 	s = "they're also the biggest shareholder of apple , 2 % if i remember correctly . edit : 2.6 % https://en.wikipedia.org/wiki/List_of_assets_owned_by_Berkshire_Hathaway"
-	s_c = clean_str(s)
-	print(s_c)
+	print(clean_str(s))
+	print(heavy_clean(s))
+	
