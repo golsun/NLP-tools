@@ -18,4 +18,5 @@ please download [mteval-v14c.pl](https://goo.gl/YUFajQ) and save in the folder w
 * XML:Twig
 * Sort:Naturally
 * String:Util 
-tested on Python 2.7, but Python 3.6 will work fine soon
+
+Works fine for both Python 2.7 and 3.6
