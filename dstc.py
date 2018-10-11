@@ -63,7 +63,7 @@ def eval_a_system(submitted,
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
-		fld_out += '_cleaned'
+		fld_out += '_%s_cleaned'%clean
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
 	nist, bleu, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
 	if n_line is None:
