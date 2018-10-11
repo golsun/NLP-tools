@@ -57,7 +57,7 @@ def eval_a_system(submitted,
 	if clean:
 		fld_out += '_cleaned'
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
-	nist, bleu, entropy, div1, div2, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
+	nist, bleu, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
 	if n_line is None:
 		n_line = len(open(path_hyp, encoding='utf-8').readlines())
 
@@ -65,10 +65,10 @@ def eval_a_system(submitted,
 	print('NIST = '+str(nist))
 	print('BLEU = '+str(bleu))
 	print('entropy = '+str(entropy))
-	print('diversity = ' + str([div1, div2]))
+	print('diversity = ' + str(div))
 	print('avg_len = '+str(avg_len))
 
-	return nist + bleu + entropy + [div1, div2, avg_len, n_line]
+	return nist + bleu + entropy + div + [avg_len, n_line]
 
 
 def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False, n_line=None):

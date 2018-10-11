@@ -111,9 +111,9 @@ def calc_diversity(path_hyp):
 def nlp_metrics(path_refs, path_hyp, fld_out='temp', n_line=None):
 	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_line)
 	entropy = calc_entropy(path_hyp, n_line)
-	div1, div2 = calc_diversity(path_hyp)
+	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_line)
-	return nist, bleu, entropy, div1, div2, avg_len
+	return nist, bleu, entropy, div, avg_len
 
 
 def _write_xml(paths_in, path_out, role, n_line=None):
