@@ -18,8 +18,13 @@ def cal_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
 	_write_xml(path_refs, fld_out + '/ref.xml', 'ref', n_line=n_line)
 
 	time.sleep(1)
-	cmd = 'perl 3rdparty/mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
-	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+	cmd = [
+		'perl','3rdparty/mteval-v14c.pl',
+		'-s', '%s/src.xml'%fld_out,
+		'-t', '%s/hyp.xml'%fld_out,
+		'-r', '%s/ref.xml'%fld_out,
+		]
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 	output, error = process.communicate()
 
 	lines = output.decode().split('\n')
@@ -28,7 +33,7 @@ def cal_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
 		bleu = lines[-4].strip('\r').split()[1:5]
 	except Exception:
 		print('mteval-v14c.pl returns unexpected message')
-		print('cmd = '+cmd)
+		print('cmd = '+str(cmd))
 		print(output)
 		print(error)
 		exit()
