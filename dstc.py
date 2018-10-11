@@ -109,10 +109,10 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--submitted', '-s', default='')
-	parser.add_argument('--submitted_fld', '-f', default='')
-	parser.add_argument('--clean', '-c', default='no')
-	parser.add_argument('--n_line', '-n', type=int, default=-1)
+	parser.add_argument('--submitted', '-s', default='')		# eval a single file
+	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
+	parser.add_argument('--clean', '-c', default='no')			# 'no', 'light', or 'heavy'
+	parser.add_argument('--n_line', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
 	args = parser.parse_args()
 
 	if args.n_line < 0:
