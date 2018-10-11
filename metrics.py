@@ -4,7 +4,7 @@ from util import *
 from collections import defaultdict
 
 
-def cal_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
+def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
 	# call NIST script: mteval-v14c.pl
 	# ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14c.pl
 	# you may need to cpan install XML:Twig Sort:Naturally String:Util 
@@ -41,11 +41,11 @@ def cal_nist_bleu(path_refs, path_hyp, fld_out='temp', n_line=None):
 	return [float(x) for x in nist], [float(x) for x in bleu]
 
 
-def cal_cum_bleu(path_refs, path_hyp):
+def calc_cum_bleu(path_refs, path_hyp):
 	# call Moses script: multi-bleu.pl
 	# https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl
-	# the 4-gram cum BLEU returned by this one should be very close to cal_nist_bleu
-	# however multi-bleu.pl doesn't return cum BLEU of lower rank, so in nlp_metrics we preferr cal_nist_bleu
+	# the 4-gram cum BLEU returned by this one should be very close to calc_nist_bleu
+	# however multi-bleu.pl doesn't return cum BLEU of lower rank, so in nlp_metrics we preferr calc_nist_bleu
 	# furthermore, this func doesn't support n_line argument
 
 	process = subprocess.Popen(
@@ -61,7 +61,7 @@ def cal_cum_bleu(path_refs, path_hyp):
 	return output.decode()
 
 
-def cal_entropy(path_hyp, n_line=None):
+def calc_entropy(path_hyp, n_line=None):
 	# based on Yizhe Zhang's code
 	etp_score = [0.0,0.0,0.0,0.0]
 	counter = [defaultdict(int),defaultdict(int),defaultdict(int),defaultdict(int)]
@@ -84,7 +84,7 @@ def cal_entropy(path_hyp, n_line=None):
 	return etp_score
 
 
-def cal_len(path, n_line):
+def calc_len(path, n_line):
 	l = []
 	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
@@ -93,7 +93,7 @@ def cal_len(path, n_line):
 	return np.mean(l)
 
 
-def cal_diversity(path_hyp):
+def calc_diversity(path_hyp):
 	tokens = [0.0,0.0]
 	types = [defaultdict(int),defaultdict(int)]
 	for line in open(path_hyp, encoding='utf-8'):
@@ -109,10 +109,10 @@ def cal_diversity(path_hyp):
 
 
 def nlp_metrics(path_refs, path_hyp, fld_out='temp', n_line=None):
-	nist, bleu = cal_nist_bleu(path_refs, path_hyp, fld_out, n_line)
-	entropy = cal_entropy(path_hyp, n_line)
-	div1, div2 = cal_diversity(path_hyp)
-	avg_len = cal_len(path_hyp, n_line)
+	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_line)
+	entropy = calc_entropy(path_hyp, n_line)
+	div1, div2 = calc_diversity(path_hyp)
+	avg_len = calc_len(path_hyp, n_line)
 	return nist, bleu, entropy, div1, div2, avg_len
 
 
