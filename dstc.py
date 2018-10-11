@@ -24,7 +24,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 	def _clean(s):
 		if clean == 'heavy':
 			return heavy_clean(s)
-		elif clean = 'light':
+		elif clean == 'light':
 			return clean_str(s)
 		else:
 			return s
@@ -85,7 +85,7 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 	print('clean = '+str(clean))
 	path_out = fld + '/report'
 	if clean:
-		path_out += '_cleaned'
+		path_out += '_%s_cleaned'%clean
 	path_out += '.tsv'
 	with open(path_out, 'w') as f:
 		f.write('\t'.join(
