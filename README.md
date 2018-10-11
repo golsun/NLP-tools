@@ -1,5 +1,5 @@
 # What does it do?
-provides easy Python ways to
+provides easy Python ways for
 *  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
 ```python
 from metrics import cal_all
