@@ -14,7 +14,7 @@ nist, bleu, entropy, avg_len = cal_all(
 * and more...
 
 # Requirement
-please download [mteval-v14c.pl](https://goo.gl/YUFajQ) and save in the folder where eval.py lives. You may need to install the following perl modules (e.g. by `cpan install`)
+please download [mteval-v14c.pl](https://goo.gl/YUFajQ) and install the following perl modules (e.g. by `cpan install`)
 * XML:Twig
 * Sort:Naturally
 * String:Util 
