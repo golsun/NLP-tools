@@ -13,9 +13,9 @@ nist, bleu, entropy, avg_len = cal_all(
 ```
 * **tokenizatioin**: clean string and deal with punctation, contraction, url, mention, tag, etc
 ```python
-s = " I don't know:). how about this??https://github.com"
+s = " I don't know:). how about this?https://github.com"
 gentle_clean(s)
-# i do n't know :) . how about this ? ? __url__
+# i do n't know :) . how about this ? __url__
 ```
 
 # Requirement
