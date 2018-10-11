@@ -1,5 +1,5 @@
 # What does it do?
-provides easy Python way to
+provides easy Python ways to
 * calculate automated NLP evaluation metrics (BLEU, NIST, entropy, etc...)
 ```python
 from eval import cal_nist
