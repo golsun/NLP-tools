@@ -104,9 +104,9 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	if args.n_line < 0:
-		n_line = None
+		n_line = None	# eval all lines
 	else:
-		n_line = args.n_line
+		n_line = args.n_line	# just eval top n_line
 
 	if len(args.submitted) > 0:
 		eval_a_system(args.submitted, clean=args.clean, n_line=n_line)
