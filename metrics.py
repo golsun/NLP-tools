@@ -85,7 +85,7 @@ def cal_entropy(path_hyp, n_line=None):
 
 def cal_len(path, n_line):
 	l = []
-	for line in open(path):
+	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
 		if len(l) == n_line:
 			break
