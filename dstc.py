@@ -80,6 +80,6 @@ if __name__ == '__main__':
 		n_line = None
 	else:
 		n_line = args.n_line
-	#eval_a_system(args.submitted, clean=args.clean, n_line=n_line)
+	
+	eval_a_system(args.submitted, clean=args.clean, n_line=n_line)
 
-	print(clean_str("they're also the biggest shareholder of apple , 2 % if i remember correctly . edit : 2.6 % https://en.wikipedia.org/wiki/List_of_assets_owned_by_Berkshire_Hathaway"))
