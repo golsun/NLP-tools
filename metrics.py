@@ -1,18 +1,14 @@
 # author: Xiang Gao @ Microsoft Research
 # Jun 2018
+from util import *
+from collections import defaultdict
 
-import os, time, subprocess, io
-open = io.open
 
 def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 	# call NIST script: mteval-v14c.pl
-	# need to install perl modules: 
-	# cpan install XML:Twig
-	# cpan install Sort:Naturally
-	# cpan install String:Util 
+	# you may need to cpan install XML:Twig Sort:Naturally String:Util 
 
-	if not os.path.exists(fld_out):
-		os.makedirs(fld_out)
+	makedirs(fld_out)
 
 	if n_line is None:
 		n_line = len(open(path_hyp, encoding='utf-8').readlines())	
@@ -24,13 +20,20 @@ def cal_nist(path_refs, path_hyp, fld_out='temp', n_line=None):
 	cmd = 'perl mteval-v14c.pl -s %s/src.xml -t %s/hyp.xml -r %s/ref.xml'%(fld_out, fld_out, fld_out)
 	print(cmd)
 	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-	output, _ = process.communicate()
+	output, error = process.communicate()
 
 	lines = output.decode().split('\n')
-	nist = lines[-6].strip('\r').split()[1:5]
-	bleu = lines[-4].strip('\r').split()[1:5]
+	try:
+		nist = lines[-6].strip('\r').split()[1:5]
+		bleu = lines[-4].strip('\r').split()[1:5]
+	except Exception:
+		print('mteval-v14c.pl returns unexpected message')
+		print(output)
+		print(error)
+		exit()
 
 	return [float(x) for x in nist], [float(x) for x in bleu]
+
 
 def cal_bleu(path_refs, path_hyp):
 	# call Moses script: multi-bleu.pl
@@ -51,7 +54,7 @@ def cal_bleu(path_refs, path_hyp):
 
 
 
-def cal_entropy(path_hyp):
+def cal_entropy(path_hyp, n_line=None):
 	# based on Yizhe Zhang's code
 
 	etp_score = [0.0,0.0,0.0,0.0]
@@ -59,13 +62,13 @@ def cal_entropy(path_hyp):
 	i = 0
 	for line in open(path_hyp, encoding='utf-8'):
 		i += 1
-		if i%10000 == 0:
-			print('processed %i lines'%i)
-		g = g.split(' ')
+		words = line.strip('\n').split()
 		for n in range(4):
-			for idx in range(len(g)-n):
-				ngram = ' '.join(g[idx:idx+n+1])
+			for idx in range(len(words)-n):
+				ngram = ' '.join(words[idx:idx+n+1])
 				counter[n][ngram] += 1
+		if i == n_line:
+			break
 
 	for n in range(4):
 		total = sum(counter[n].values())
@@ -73,6 +76,22 @@ def cal_entropy(path_hyp):
 			etp_score[n] += - v /total * (np.log(v) - np.log(total))
 
 	return etp_score
+
+
+
+
+def cal_len(path):
+	l = []
+	for line in open(path):
+		l.append(len(line.strip('\n').split()))
+	return np.mean(l)
+
+
+def cal_all(path_refs, path_hyp, fld_out='temp', n_line=None):
+	nist, bleu = cal_nist(path_refs, path_hyp, fld_out, n_line)
+	entropy = cal_entropy(path_hyp)
+	avg_len = cal_len(path_hyp)
+	return nist, bleu, entropy, avg_len
 
 
 
@@ -133,3 +152,4 @@ def _write_xml(paths_in, path_out, role, n_line=None):
 	lines.append('</mteval>')
 	with open(path_out, 'w', encoding='utf-8') as f:
 		f.write(unicode('\n'.join(lines)))
+
