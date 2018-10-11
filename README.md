@@ -2,8 +2,8 @@
 provides easy Python ways for
 *  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
 ```python
-from metrics import cal_all
-nist, bleu, entropy, avg_len = cal_all(
+from metrics import nlp_metrics
+nist, bleu, entropy, avg_len = nlp_metrics(
 	  ["demo/ref0.txt", "demo/ref1.txt"], 
 	  "demo/hyp.txt")
 # nist = [1.0633, 1.1258, 1.1258, 1.1258]
@@ -13,9 +13,9 @@ nist, bleu, entropy, avg_len = cal_all(
 ```
 * **tokenizatioin**: clean string and deal with punctation, contraction, url, mention, tag, etc
 ```python
-from tokenizers import gentle_clean
+from tokenizers import clean_str
 s = " I don't know:). how about this?https://github.com"
-gentle_clean(s)
+clean_str(s)
 # i do n't know :) . how about this ? __url__
 ```
 
