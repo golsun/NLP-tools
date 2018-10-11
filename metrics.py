@@ -80,17 +80,19 @@ def cal_entropy(path_hyp, n_line=None):
 
 
 
-def cal_len(path):
+def cal_len(path, n_line):
 	l = []
 	for line in open(path):
 		l.append(len(line.strip('\n').split()))
+		if len(l) == n_line:
+			break
 	return np.mean(l)
 
 
 def cal_all(path_refs, path_hyp, fld_out='temp', n_line=None):
 	nist, bleu = cal_nist(path_refs, path_hyp, fld_out, n_line)
-	entropy = cal_entropy(path_hyp)
-	avg_len = cal_len(path_hyp)
+	entropy = cal_entropy(path_hyp, n_line)
+	avg_len = cal_len(path_hyp, n_line)
 	return nist, bleu, entropy, avg_len
 
 

@@ -1,6 +1,4 @@
-from eval import *
-import sys, io
-open = io.open
+from metrics import *
 
 def extract_cells(path_in, path_hash):
 	keys = [line.strip('\n') for line in open(path_hash)]
@@ -42,7 +40,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6):
 	return path_hyp, path_refs
 
 
-def main(submitted, n_line=None):
+def eval_a_system(submitted, n_line=None):
 
 	n_ref = 6
 	multi_ref = 'dstc/test.refs'
@@ -50,14 +48,23 @@ def main(submitted, n_line=None):
 	fld_out = submitted.replace('.txt','')
 
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref)
-	nist, bleu = cal_nist(path_refs, path_hyp, fld_out, n_line=n_line)
-	print(nist)
-	print(bleu)
+	nist, bleu, entropy, avg_len = cal_all(path_refs, path_hyp, fld_out, n_line=n_line)
+	print(submitted)
+	print('NIST = '+str(NIST))
+	print('BLEU = '+str(BLEU))
+	print('entropy = '+str(entropy))
+	print('avg_len = '+str(avg_len))
+	return nist + bleu + entropy + [avg_len]
+
+
 
 if __name__ == '__main__':
-	submitted = sys.argv[1]
+	if len(sys.argv) > 1:
+		submitted = sys.argv[1]
+	else:
+		submitted = 'dstc/baseline/primary.txt'
 	if len(sys.argv)>2:
 		n_line = int(sys.argv[2])
 	else:
 		n_line = None
-	main(submitted, n_line)
+	eval_a_system(submitted, n_line)
