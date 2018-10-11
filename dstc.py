@@ -49,44 +49,50 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 
 def eval_a_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, n_line=None,
-	clean=False, PRINT=True):
+	clean=False):
+
+	print(submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_cleaned'
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
 	nist, bleu, entropy, div1, div2, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
-	if PRINT:
-		print(submitted)
-		print('NIST = '+str(nist))
-		print('BLEU = '+str(bleu))
-		print('entropy = '+str(entropy))
-		print('diversity = ' + str([div1, div2]))
-		print('avg_len = '+str(avg_len))
+	if n_line is None:
+		n_line = len(open(path_hyp, encoding='utf-8').readlines())
 
-	return nist + bleu + entropy + [div1, div2, avg_len]
+	print('n_line = '+str(n_line))
+	print('NIST = '+str(nist))
+	print('BLEU = '+str(bleu))
+	print('entropy = '+str(entropy))
+	print('diversity = ' + str([div1, div2]))
+	print('avg_len = '+str(avg_len))
+
+	return nist + bleu + entropy + [div1, div2, avg_len, n_line]
 
 
-def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False):
+def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False, n_line=None):
 	path_out = fld + '/report'
 	if clean:
 		path_out + '_cleaned'
 	path_out += '.tsv'
 	with open(path_out, 'w') as f:
 		f.write('\t'.join(
-			['fname'] + \
-			['nist%i'%i for i in range(1, 4+1)] + \
-			['bleu%i'%i for i in range(1, 4+1)] + \
-			['entropy%i'%i for i in range(1, 4+1)] +\
-			['div1','div2','avg_len']) + '\n')
+				['fname'] + \
+				['nist%i'%i for i in range(1, 4+1)] + \
+				['bleu%i'%i for i in range(1, 4+1)] + \
+				['entropy%i'%i for i in range(1, 4+1)] +\
+				['div1','div2','avg_len','n_line']
+			) + '\n')
 
 	for fname in os.listdir(fld):
 		if fname.endswith('.txt'):
 			submitted = fld + '/' + fname
-			results = eval_a_system(submitted, keys=keys, multi_ref=multi_ref, n_ref=n_ref, clean=clean)
+			results = eval_a_system(submitted, keys=keys, multi_ref=multi_ref, n_ref=n_ref, clean=clean, n_line=n_line)
 			with open(path_out, 'a') as f:
-				f.write('\t'.join(submitted + map(str, results)) + '\n')
+				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
+	print('metrics saved to '+path_out)
 
 
 if __name__ == '__main__':
@@ -94,10 +100,16 @@ if __name__ == '__main__':
 	parser.add_argument('--submitted', '-s', default='')
 	parser.add_argument('--submitted_fld', '-f', default='')
 	parser.add_argument('--clean', '-c', action='store_true', default=False)
+	parser.add_argument('--n_line', '-n', type=int, default=-1)
 	args = parser.parse_args()
 
+	if args.n_line < 0:
+		n_line = None
+	else:
+		n_line = args.n_line
+
 	if len(args.submitted) > 0:
-		eval_a_system(args.submitted, clean=args.clean)
+		eval_a_system(args.submitted, clean=args.clean, n_line=n_line)
 	if len(args.submitted_fld) > 0:
-		eval_all_systems(args.submitted_fld, clean=args.clean)
+		eval_all_systems(args.submitted_fld, clean=args.clean, n_line=n_line)
 
