@@ -4,8 +4,8 @@ provides easy Python ways for
 ```python
 from metrics import nlp_metrics
 nist, bleu, entropy, avg_len = nlp_metrics(
-	  ["demo/ref0.txt", "demo/ref1.txt"], 
-	  "demo/hyp.txt")
+	  path_refs=["demo/ref0.txt", "demo/ref1.txt"], 
+	  path_hyp="demo/hyp.txt")
 # nist = [1.0633, 1.1258, 1.1258, 1.1258]
 # bleu = [0.3158, 0.2433, 0.2088, 0.1737]
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
