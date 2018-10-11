@@ -2,10 +2,14 @@
 provides easy Python ways to
 * calculate automated NLP evaluation metrics (BLEU, NIST, entropy, etc...)
 ```python
-from eval import cal_nist
-nist, bleu = cal_nist(['demo/ref.txt'], 'demo/hyp.txt')
+from metrics import cal_all
+nist, bleu, entropy, avg_len = cal_all(
+	  ['demo/ref0.txt', 'demo/ref1.txt'], 
+	  'demo/hyp.txt')
 # nist = [1.0633, 1.1258, 1.1258, 1.1258]
 # bleu = [0.3158, 0.2433, 0.2088, 0.1737]
+# entropy = [2.5232, 2.4849, 2.1972, 1.7918]
+# avg_len = 5.0000
 ```
 * and more...
 
