@@ -22,8 +22,10 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 		os.makedirs(fld_out)
 
 	def _clean(s):
-		if clean:
+		if clean == 'heavy':
 			return heavy_clean(s)
+		elif clean = 'light':
+			return clean_str(s)
 		else:
 			return s
 
@@ -109,7 +111,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--submitted', '-s', default='')
 	parser.add_argument('--submitted_fld', '-f', default='')
-	parser.add_argument('--clean', '-c', action='store_true', default=False)
+	parser.add_argument('--clean', '-c', default='no')
 	parser.add_argument('--n_line', '-n', type=int, default=-1)
 	args = parser.parse_args()
 
