@@ -1,5 +1,6 @@
-# author: Xiang Gao @ Microsoft Research
-# Oct 2018
+# author: Xiang Gao @ Microsoft Research, Oct 2018
+# compute automated NLP evaluation metrics
+
 from util import *
 from collections import defaultdict
 
@@ -81,9 +82,7 @@ def cal_entropy(path_hyp, n_line=None):
 	return etp_score
 
 
-
-
-def cal_len(path, n_line):
+def cal_len(path, n_line=None):
 	l = []
 	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
@@ -99,9 +98,10 @@ def nlp_metrics(path_refs, path_hyp, fld_out='temp', n_line=None):
 	return nist, bleu, entropy, avg_len
 
 
-
-
 def _write_xml(paths_in, path_out, role, n_line=None):
+	# convert text files to xml files required by mteval-v14c.pl
+	# role should be one of ['src','hyp','ref']
+	# for input files (paths_in, a list), each line is an utterance. see demo/*.txt for examples
 
 	lines = [
 		'<?xml version="1.0" encoding="UTF-8"?>',

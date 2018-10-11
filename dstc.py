@@ -49,37 +49,55 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_ref=6, clean=False)
 
 def eval_a_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, n_line=None,
-	clean=False, PRINT=True):
+	clean=False):
+
+	print('evaluating '+submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_cleaned'
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_ref, clean=clean)
 	nist, bleu, entropy, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_line=n_line)
-	if PRINT:
-		print(submitted)
-		print('NIST = '+str(nist))
-		print('BLEU = '+str(bleu))
-		print('entropy = '+str(entropy))
-		print('avg_len = '+str(avg_len))
+
+	print('NIST = '+str(nist))
+	print('BLEU = '+str(bleu))
+	print('entropy = '+str(entropy))
+	print('avg_len = '+str(avg_len))
 
 	return nist + bleu + entropy + [avg_len]
 
-#def eval_all()
+
+def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_ref=6, clean=False):
+	path_out = fld + '/report'
+	if clean:
+		path_out + '_cleaned'
+	path_out += '.tsv'
+	with open(path_out, 'w') as f:
+		f.write('\t'.join(
+			['fname'] + \
+			['nist%i'%i for i in range(1, 4+1)] + \
+			['bleu%i'%i for i in range(1, 4+1)] + \
+			['entropy%i'%i for i in range(1, 4+1)] +\
+			['avg_len']) + '\n')
+
+	for fname in os.listdir(fld):
+		if fname.endswith('.txt'):
+			submitted = fld + '/' + fname
+			results = eval_a_system(submitted, keys=keys, multi_ref=multi_ref, n_ref=n_ref, clean=clean)
+			with open(path_out, 'a') as f:
+				f.write('\t'.join(submitted + map(str, results)) + '\n')
+
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--submitted', '-s', default='dstc/baseline/primary.txt')
+	parser.add_argument('--submitted', '-s', default='')
+	parser.add_argument('--submitted_fld', '-f', default='')
 	parser.add_argument('--clean', '-c', action='store_true', default=False)
-	parser.add_argument('--n_line', '-n', type=int, default=-1)
 	args = parser.parse_args()
 
-	#print(args.clean)
-	if args.n_line < 0:
-		n_line = None
-	else:
-		n_line = args.n_line
-	
-	eval_a_system(args.submitted, clean=args.clean, n_line=n_line)
+	if len(args.submitted) > 0:
+		eval_a_system(args.submitted, clean=args.clean)
+	if len(args.submitted_fld) > 0:
+		eval_all_systems(args.submitted_fld, clean=args.clean)
 
