@@ -3,12 +3,13 @@ provides easy Python ways for
 *  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
 ```python
 from metrics import nlp_metrics
-nist, bleu, entropy, diversity, avg_len = nlp_metrics(
+nist, bleu, meteor, entropy, diversity, avg_len = nlp_metrics(
 	  path_refs=["demo/ref0.txt", "demo/ref1.txt"], 
 	  path_hyp="demo/hyp.txt")
 	  
 # nist = [1.8338, 2.0838, 2.1949, 2.1949]
 # bleu = [0.4667, 0.441, 0.4017, 0.3224]
+# meteor = 0.2832
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
 # diversity = [0.8667, 1.000]
 # avg_len = 5.0000
@@ -23,9 +24,9 @@ clean_str(s)
 ```
 
 # Requirement
-please download [mteval-v14c.pl](https://goo.gl/YUFajQ), save it in a new folder `3rdparty`, and install the following perl modules (e.g. by `cpan install`)
-* XML:Twig
-* Sort:Naturally
-* String:Util 
+* Works fine for both Python 2.7 and 3.6
+* Please downloads the following 3rd party packages and save in a new folder `3rdparty`
+	* [**mteval-v14c.pl**](https://goo.gl/YUFajQ) to compute [NIST](http://www.mt-archive.info/HLT-2002-Doddington.pdf). You may need to install the following [perl](https://www.perl.org/get.html) modules (e.g. by `cpan install`): XML:Twig, Sort:Naturally and String:Util 
+	* [**meteor-1.5**](http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz) to compute [METEOR](http://www.cs.cmu.edu/~alavie/METEOR/index.html). It requires [JAVA](https://www.java.com/en/download/help/download_options.xml)
 
-Works fine for both Python 2.7 and 3.6
+
