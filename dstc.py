@@ -69,7 +69,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 
 def eval_one_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
-	clean=False, vshuman=False):
+	clean=False, vshuman=False, PRINT=True):
 
 	print('evaluating '+submitted)
 
@@ -78,54 +78,54 @@ def eval_one_system(submitted,
 		fld_out += '_%s_cleaned'%clean
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean, vshuman=vshuman)
 	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
+	
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
 
-	print('n_lines = '+str(n_lines))
-	print('NIST = '+str(nist))
-	print('BLEU = '+str(bleu))
-	print('METEOR = '+str(meteor))
-	print('entropy = '+str(entropy))
-	print('diversity = ' + str(div))
-	print('avg_len = '+str(avg_len))
+	if PRINT:
+		print('n_lines = '+str(n_lines))
+		print('NIST = '+str(nist))
+		print('BLEU = '+str(bleu))
+		print('METEOR = '+str(meteor))
+		print('entropy = '+str(entropy))
+		print('diversity = ' + str(div))
+		print('avg_len = '+str(avg_len))
 
-	return nist + bleu + entropy + div + [avg_len, n_lines]
+	return [n_lines] + nist + bleu + [meteor] + entropy + div + [avg_len]
 
 
-def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None, vshuman=False):
-	# evaluate all systems (*.txt) in `fld`
+def eval_all_systems(flds, path_report='dstc/report.tsv', keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None, vshuman=False):
+	# evaluate all systems (*.txt) in each folder in `flds`
 
-	print('clean = '+str(clean))
-	path_out = fld + '/report'
-	if clean:
-		path_out += '_%s_cleaned'%clean
-	path_out += '.tsv'
-	with open(path_out, 'w') as f:
+	with open(path_report, 'w') as f:
 		f.write('\t'.join(
-				['fname'] + \
+				['fname', 'n_lines'] + \
 				['nist%i'%i for i in range(1, 4+1)] + \
 				['bleu%i'%i for i in range(1, 4+1)] + \
+				['meteor'] + \
 				['entropy%i'%i for i in range(1, 4+1)] +\
-				['div1','div2','avg_len','n_lines']
+				['div1','div2','avg_len']
 			) + '\n')
 
-	for fname in os.listdir(fld):
-		if fname.endswith('.txt'):
-			submitted = fld + '/' + fname
-			results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman)
-			print()
-			with open(path_out, 'a') as f:
-				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
+	for fld in flds:
+		for fname in os.listdir(fld):
+			if fname.endswith('.txt'):
+				submitted = fld + '/' + fname
+				results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman, PRINT=False)
+				with open(path_report, 'a') as f:
+					f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
-	print('metrics saved to '+path_out)
+	print('report saved to: '+path_report)
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--submitted', '-s', default='')		# eval a single file
-	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
+	parser.add_argument('submitted')				# if '*', eval all teams listed in dstc/teams.txt
+										# elif endswith '.txt', eval this single file
+										# else, eval all *.txt in folder `submitted_fld`
+
 	parser.add_argument('--clean', '-c', default='no')		# 'no', 'light', or 'heavy'
-	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
+	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines (e.g., for fast debugging)
 	parser.add_argument('--n_refs', '-r', type=int, default=6)	# number of references
 	parser.add_argument('--vshuman', '-v', type=bool, default=False) # whether one of the systems is human (i.e., == ref), 
 	                                                                 # in which case we need to remove human output from refs
@@ -136,8 +136,14 @@ if __name__ == '__main__':
 	else:
 		n_lines = args.n_lines	# just eval top n_lines
 
-	if len(args.submitted) > 0:
-		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
-	if len(args.submitted_fld) > 0:
-		eval_all_systems(args.submitted_fld, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
-
+	if args.submitted.endswith('.txt'):
+		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
+	else:
+		fname_report = 'report_ref%i_%sclean.tsv'%(args.n_refs, args.clean)
+		if args.submitted == '*':
+			flds = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
+			path_report = 'dstc/' + fname_report
+		else:
+			flds = [args.submitted]
+			path_report = args.submitted + '/' + fname_report
+		eval_all_systems(flds, path_report, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)

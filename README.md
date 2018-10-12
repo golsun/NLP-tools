@@ -1,6 +1,6 @@
 # What does it do?
 provides easy Python ways for
-*  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
+*  **evaluation**: calculate automated NLP metrics (BLEU, NIST, METEOR, entropy, etc...)
 ```python
 from metrics import nlp_metrics
 nist, bleu, meteor, entropy, diversity, avg_len = nlp_metrics(
@@ -25,7 +25,7 @@ clean_str(s)
 
 # Requirement
 * Works fine for both Python 2.7 and 3.6
-* Please downloads the following 3rd party packages and save in a new folder `3rdparty`
+* Please **downloads** the following 3rd-party packages and save in a new folder `3rdparty`
 	* [**mteval-v14c.pl**](https://goo.gl/YUFajQ) to compute [NIST](http://www.mt-archive.info/HLT-2002-Doddington.pdf). You may need to install the following [perl](https://www.perl.org/get.html) modules (e.g. by `cpan install`): XML:Twig, Sort:Naturally and String:Util 
 	* [**meteor-1.5**](http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz) to compute [METEOR](http://www.cs.cmu.edu/~alavie/METEOR/index.html). It requires [JAVA](https://www.java.com/en/download/help/download_options.xml)
 
