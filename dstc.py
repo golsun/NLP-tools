@@ -54,13 +54,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 			f.write(unicode('\n'.join(lines[i])))
 		path_refs.append(path_ref)
 
-	path_merged_refs = fld_out + '/multiref.txt'
-	with open(path_merged_refs, 'w', encoding='utf-8') as f:
-		for j in range(len(lines[0])):
-			for i in range(n_refs):
-				f.write(unicode(lines[i][j]) + "\n")
-
-	return path_hyp, path_refs, path_merged_refs
+	return path_hyp, path_refs
 
 
 def eval_one_system(submitted, 
@@ -72,8 +66,8 @@ def eval_one_system(submitted,
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_%s_cleaned'%clean
-	path_hyp, path_refs, path_merged_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
-	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_lines=n_lines, n_refs=n_refs)
+	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
+	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
 
@@ -121,7 +115,7 @@ if __name__ == '__main__':
 	parser.add_argument('--submitted', '-s', default='')		# eval a single file
 	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
 	parser.add_argument('--clean', '-c', default='no')			# 'no', 'light', or 'heavy'
-	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
+	parser.add_argument('--n_lines', '-n', type=int, default=-1)# eval all lines (default) or top n_lines
 	parser.add_argument('--n_refs', '-r', type=int, default=6)	# number of references
 	args = parser.parse_args()
 

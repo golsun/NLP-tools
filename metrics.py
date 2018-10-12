@@ -7,7 +7,7 @@ from collections import defaultdict
 
 
 def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_lines=None):
-	# call NIST script: mteval-v14c.pl
+	# call mteval-v14c.pl
 	# ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14c.pl
 	# you may need to cpan install XML:Twig Sort:Naturally String:Util 
 
@@ -33,22 +33,24 @@ def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_lines=None):
 	try:
 		nist = lines[-6].strip('\r').split()[1:5]
 		bleu = lines[-4].strip('\r').split()[1:5]
+		return [float(x) for x in nist], [float(x) for x in bleu]
+
 	except Exception:
 		print('mteval-v14c.pl returns unexpected message')
 		print('cmd = '+str(cmd))
-		print(output)
-		print(error)
-		exit()
+		print(output.decode())
+		print(error.decode())
+		return [-1]*4, [-1]*4
 
-	return [float(x) for x in nist], [float(x) for x in bleu]
+	
 
 
 def calc_cum_bleu(path_refs, path_hyp):
-	# call Moses script: multi-bleu.pl
+	# call multi-bleu.pl
 	# https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl
 	# the 4-gram cum BLEU returned by this one should be very close to calc_nist_bleu
 	# however multi-bleu.pl doesn't return cum BLEU of lower rank, so in nlp_metrics we preferr calc_nist_bleu
-	# furthermore, this func doesn't support n_lines argument
+	# NOTE: this func doesn't support n_lines argument and output is not parsed yet
 
 	process = subprocess.Popen(
 			['perl', '3rdparty/multi-bleu.perl'] + path_refs, 
@@ -63,20 +65,34 @@ def calc_cum_bleu(path_refs, path_hyp):
 	return output.decode()
 
 
-def calc_meteor(path_merged_refs, path_hyp, n_refs):
+def calc_meteor(path_refs, path_hyp, fld_out='temp', n_lines=None, pretokenized=True):
 	# Call METEOR code.
 	# http://www.cs.cmu.edu/~alavie/METEOR/index.html
-	#java -jar meteor-1.5.jar hyp.txt multiref.txt -r 6 -l en -norm
-	cmd = ['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', str(n_refs), '-l', 'en', '-norm']
-	print("Command: " + " ".join(cmd))
+
+	makedirs(fld_out)
+	path_merged_refs = fld_out + '/refs_merged.txt'
+	_write_merged_refs(path_refs, path_merged_refs)
+
+	cmd = [
+			'java', '-Xmx1g',	# heapsize of 1G to avoid OutOfMemoryError
+			'-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', 
+			path_hyp, path_merged_refs, 
+			'-r', '%i'%len(path_refs), 	# refCount 
+			'-l', 'en', 	# also supports language: cz de es fr ar
+			]
+	if not pretokenized:
+		cmd.append('-norm')
+	
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, error = process.communicate()
-	#for line in error.decode().split('\n'):
-	#	print(line)
 	for line in output.decode().split('\n'):
 		if "Final score:" in line:
-			els = re.split("\s+", line)
-			return float(els[2])
+			return float(line.split()[-1])
+
+	print('meteor-1.5.jar returns unexpected message')
+	print("cmd = " + " ".join(cmd))
+	print(output.decode())
+	print(error.decode())
 	return -1 
 
 
@@ -128,16 +144,34 @@ def calc_diversity(path_hyp):
 	return [div1, div2]
 
 
-def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=6, n_lines=None):
+def nlp_metrics(path_refs, path_hyp, fld_out='temp',  n_lines=None):
 	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
-	meteor = calc_meteor(path_merged_refs, path_hyp, n_refs=n_refs)
+	meteor = calc_meteor(path_refs, path_hyp, fld_out, n_lines)
 	entropy = calc_entropy(path_hyp, n_lines)
 	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_lines)
 	return nist, bleu, meteor, entropy, div, avg_len
 
 
+
+def _write_merged_refs(paths_in, path_out, n_lines=None):
+	# prepare merged ref file for meteor-1.5.jar (calc_meteor)
+	# lines[i][j] is the ref from i-th ref set for the j-th query
+
+	lines = []
+	for path_in in paths_in:
+		lines.append([line.strip('\n') for line in open(path_in, encoding='utf-8')])
+
+	with open(path_out, 'w', encoding='utf-8') as f:
+		for j in range(len(lines[0])):
+			for i in range(len(paths_in)):
+				f.write(unicode(lines[i][j]) + "\n")
+
+
+
 def _write_xml(paths_in, path_out, role, n_lines=None):
+	# prepare .xml files for mteval-v14c.pl (calc_nist_bleu)
+	# role = 'src', 'hyp' or 'ref'
 
 	lines = [
 		'<?xml version="1.0" encoding="UTF-8"?>',

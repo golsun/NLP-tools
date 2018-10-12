@@ -3,12 +3,14 @@ from tokenizers import *
 
 # evaluation
 
-nist, bleu, entropy, diversity, avg_len = nlp_metrics(
+
+nist, bleu, meteor, entropy, diversity, avg_len = nlp_metrics(
 	path_refs=['demo/ref0.txt', 'demo/ref1.txt'], 
 	path_hyp='demo/hyp.txt')
 
 print(nist)
 print(bleu)
+print(meteor)
 print(entropy)
 print(diversity)
 print(avg_len)
