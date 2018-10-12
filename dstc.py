@@ -44,7 +44,8 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 	for k in keys:
 		refs = cells_ref[k]
 		for i in range(n_refs):
-			lines[i].append(_clean(refs[i].split('|')[1]))
+			idx = i % len(refs)
+			lines[i].append(_clean(refs[idx].split('|')[1]))
 
 	path_refs = []
 	for i in range(n_refs):
@@ -72,7 +73,7 @@ def eval_one_system(submitted,
 	if clean:
 		fld_out += '_%s_cleaned'%clean
 	path_hyp, path_refs, path_merged_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
-	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_lines=n_lines)
+	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out, n_lines=n_lines, n_refs=n_refs)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
 
@@ -121,6 +122,7 @@ if __name__ == '__main__':
 	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
 	parser.add_argument('--clean', '-c', default='no')			# 'no', 'light', or 'heavy'
 	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
+	parser.add_argument('--n_refs', '-r', type=int, default=6)	# number of references
 	args = parser.parse_args()
 
 	if args.n_lines < 0:
@@ -129,7 +131,7 @@ if __name__ == '__main__':
 		n_lines = args.n_lines	# just eval top n_lines
 
 	if len(args.submitted) > 0:
-		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines)
+		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
 	if len(args.submitted_fld) > 0:
-		eval_all_systems(args.submitted_fld, clean=args.clean, n_lines=n_lines)
+		eval_all_systems(args.submitted_fld, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
 
