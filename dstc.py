@@ -105,7 +105,7 @@ def eval_all_systems(flds, path_report='dstc/report.tsv', keys='dstc/keys.2k.txt
 				with open(path_report, 'a') as f:
 					f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
-	print('report saved to: '+path_out)
+	print('report saved to: '+path_report)
 
 
 if __name__ == '__main__':
