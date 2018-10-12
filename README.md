@@ -3,12 +3,13 @@ provides easy Python ways for
 *  **evaluation**: calculate automated NLP metrics (BLEU, NIST, entropy, etc...)
 ```python
 from metrics import nlp_metrics
-nist, bleu, entropy, diversity, avg_len = nlp_metrics(
+nist, bleu, meteor, entropy, diversity, avg_len = nlp_metrics(
 	  path_refs=["demo/ref0.txt", "demo/ref1.txt"], 
 	  path_hyp="demo/hyp.txt")
 	  
 # nist = [1.8338, 2.0838, 2.1949, 2.1949]
 # bleu = [0.4667, 0.441, 0.4017, 0.3224]
+# meteor = 0.2832
 # entropy = [2.5232, 2.4849, 2.1972, 1.7918]
 # diversity = [0.8667, 1.000]
 # avg_len = 5.0000
