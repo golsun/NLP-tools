@@ -78,10 +78,8 @@ def calc_meteor(path_refs, path_hyp, fld_out='temp', n_lines=None, pretokenized=
 			'-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', 
 			path_hyp, path_merged_refs, 
 			'-r', '%i'%len(path_refs), 	# refCount 
-			'-l', 'en', 	# also supports language: cz de es fr ar
+			'-l', 'en', '-norm' 	# also supports language: cz de es fr ar
 			]
-	if not pretokenized:
-		cmd.append('-norm')
 	
 	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, error = process.communicate()

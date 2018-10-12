@@ -20,12 +20,8 @@ def clean_str(txt):
 	txt = ' '.join(words)
 
 	# remove illegal char
-	txt = txt.replace(chr(92),'')	# chr(92) = '\'. as twitter has 'b\/c' rather than 'b/c'
-	txt = txt.replace("b/c","because").replace('j/k','just kidding').replace('w/o','without').replace('w/','with')
-	txt = re.sub('__mention__','MENTION',txt)
 	txt = re.sub('__url__','URL',txt)
 	txt = re.sub(r"[^A-Za-z0-9():,.!?' ]", " ", txt)
-	txt = re.sub('MENTION','__mention__',txt)	
 	txt = re.sub('URL','__url__',txt)	
 
 	# contraction
@@ -39,21 +35,6 @@ def clean_str(txt):
 	
 	# remove un-necessary space
 	return ' '.join(txt.split())
-
-
-def clean_twitter(txt):
-	# return None if quoted
-	if "“__mention__:" in txt:
-		return None
-
-	txt = txt.replace('>',' ')		# a symbol never showing in reddit
-	txt = txt.replace('#N#',' ')
-	return clean_str(txt)
-
-
-def clean_reddit(txt):
-	txt = txt.lower().replace('r/','')
-	return clean_str(txt)
 
 def heavy_clean(s):
 	s = clean_str(s)
