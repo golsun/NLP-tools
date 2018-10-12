@@ -1,6 +1,7 @@
 # author: Xiang Gao @ Microsoft Research, Oct 2018
 # compute NLP evaluation metrics
 
+import re
 from util import *
 from collections import defaultdict
 
@@ -66,14 +67,17 @@ def calc_meteor(path_merged_refs, path_hyp, n_refs):
 	# Call METEOR code.
 	# http://www.cs.cmu.edu/~alavie/METEOR/index.html
 	#java -jar meteor-1.5.jar hyp.txt multiref.txt -r 6 -l en -norm
-	#process = subprocess.Popen(['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', n_refs, '-l', 'en', '-norm'], stdout=subprocess.PIPE)
-	#with open(path_hyp, encoding='utf-8') as f:
-	#	lines = f.readlines()
-	#for line in lines:
-	#	process.stdin.write(line.encode())
-	#output, error = process.communicate()
-	#return output.decode()
-	return 0
+	cmd = ['java', '-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', path_hyp, path_merged_refs, '-r', str(n_refs), '-l', 'en', '-norm']
+	print("Command: " + " ".join(cmd))
+	process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, error = process.communicate()
+	#for line in error.decode().split('\n'):
+	#	print(line)
+	for line in output.decode().split('\n'):
+		if "Final score:" in line:
+			els = re.split("\s+", line)
+			return float(els[2])
+	return -1 
 
 
 def calc_entropy(path_hyp, n_lines=None):
@@ -124,7 +128,7 @@ def calc_diversity(path_hyp):
 	return [div1, div2]
 
 
-def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=1, n_lines=None):
+def nlp_metrics(path_refs, path_merged_refs, path_hyp, fld_out='temp', n_refs=6, n_lines=None):
 	nist, bleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
 	meteor = calc_meteor(path_merged_refs, path_hyp, n_refs=n_refs)
 	entropy = calc_entropy(path_hyp, n_lines)
