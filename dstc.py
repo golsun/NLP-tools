@@ -15,7 +15,7 @@ def extract_cells(path_in, path_hash):
 	return cells
 
 
-def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False):
+def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False, vshuman=False):
 	cells_hyp = extract_cells(raw_hyp, path_hash)
 	cells_ref = extract_cells(raw_ref, path_hash)
 	if not os.path.exists(fld_out):
@@ -38,6 +38,16 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 	with open(path_hyp, 'w', encoding='utf-8') as f:
 		f.write(unicode('\n'.join(lines)))
 	
+	if vshuman:
+		for k in keys:
+			L = len(cells_ref[k])
+			for i in range(L):
+				if cells_ref[k][i].split('|')[1] == cells_hyp[k][-1]:
+					for j in range(L):
+						if cells_ref[k][j].split('|')[1] != cells_hyp[k][-1]:
+							cells_ref[k][i] = cells_ref[k][j]
+							break
+
 	lines = []
 	for _ in range(n_refs):
 		lines.append([])
@@ -59,14 +69,14 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 
 def eval_one_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
-	clean=False):
+	clean=False, vshuman=False):
 
 	print('evaluating '+submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
 		fld_out += '_%s_cleaned'%clean
-	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean)
+	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean, vshuman=vshuman)
 	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
 	if n_lines is None:
 		n_lines = len(open(path_hyp, encoding='utf-8').readlines())
@@ -82,7 +92,7 @@ def eval_one_system(submitted,
 	return nist + bleu + entropy + div + [avg_len, n_lines]
 
 
-def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None):
+def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None, vshuman=False):
 	# evaluate all systems (*.txt) in `fld`
 
 	print('clean = '+str(clean))
@@ -102,7 +112,7 @@ def eval_all_systems(fld, keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n
 	for fname in os.listdir(fld):
 		if fname.endswith('.txt'):
 			submitted = fld + '/' + fname
-			results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines)
+			results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman)
 			print()
 			with open(path_out, 'a') as f:
 				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
@@ -114,9 +124,11 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--submitted', '-s', default='')		# eval a single file
 	parser.add_argument('--submitted_fld', '-f', default='')	# eval all *.txt in submitted_fld
-	parser.add_argument('--clean', '-c', default='no')			# 'no', 'light', or 'heavy'
-	parser.add_argument('--n_lines', '-n', type=int, default=-1)# eval all lines (default) or top n_lines
+	parser.add_argument('--clean', '-c', default='no')		# 'no', 'light', or 'heavy'
+	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines
 	parser.add_argument('--n_refs', '-r', type=int, default=6)	# number of references
+	parser.add_argument('--vshuman', '-v', type=bool, default=False) # whether one of the systems is human (i.e., == ref), 
+	                                                                 # in which case we need to remove human output from refs
 	args = parser.parse_args()
 
 	if args.n_lines < 0:
@@ -125,7 +137,7 @@ if __name__ == '__main__':
 		n_lines = args.n_lines	# just eval top n_lines
 
 	if len(args.submitted) > 0:
-		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
+		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
 	if len(args.submitted_fld) > 0:
-		eval_all_systems(args.submitted_fld, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
+		eval_all_systems(args.submitted_fld, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
 
