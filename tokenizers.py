@@ -11,8 +11,6 @@ def clean_str(txt):
 	# url and tag
 	words = []
 	for word in txt.split():
-		if word[0] == '#':	# don't allow tag
-			continue
 		i = word.find('http') 
 		if i >= 0:
 			word = word[:i] + ' ' + '__url__'
