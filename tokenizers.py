@@ -20,7 +20,7 @@ def clean_str(txt):
 	txt = ' '.join(words)
 
 	# remove markdown URL
-	txt = txt.replace('] ( __url__ )','')
+	txt = txt.replace('] ( __url__ )',' ')
 
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
