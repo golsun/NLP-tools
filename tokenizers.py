@@ -10,7 +10,7 @@ def clean_str(txt):
 
 	# url and tag
 	words = []
-	for word in txt.lower().split():
+	for word in txt.split():
 		if word[0] == '#':	# don't allow tag
 			continue
 		i = word.find('http') 
@@ -18,6 +18,9 @@ def clean_str(txt):
 			word = word[:i] + ' ' + '__url__'
 		words.append(word.strip())
 	txt = ' '.join(words)
+
+	# remove markdown URL
+	txt = txt.replace('] ( __url__ )','')
 
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
@@ -36,13 +39,14 @@ def clean_str(txt):
 	# remove un-necessary space
 	return ' '.join(txt.split())
 
-def heavy_clean(s):
-	s = clean_str(s)
-	s = re.sub(r"[^a-z0-9 ]", " ", s)
-	return ' '.join(s.split())
 
 if __name__ == '__main__':
-	s = " I don't know:). how about this?https://github.com/golsun/deep-RL-time-series"
-	print(clean_str(s))
-	print(heavy_clean(s))
+	ss = [
+		" I don't know:). how about this?https://github.com/golsun/deep-RL-time-series",
+		"please try [ GitHub ] ( https://github.com )",
+		]
+	for s in ss:
+		print(s)
+		print(clean_str(s))
+		print()
 	

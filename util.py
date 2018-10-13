@@ -10,3 +10,13 @@ else:
 def makedirs(fld):
 	if not os.path.exists(fld):
 		makedirs(fld)
+
+
+def str2bool(s):
+	# to avoid issue like this: https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+	if s.lower() in ['t','true','1','y']:
+		return True
+	elif s.lower() in ['f','false','0','n']:
+		return False
+	else:
+		raise ValueError

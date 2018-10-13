@@ -1,6 +1,7 @@
 # author: Xiang Gao @ Microsoft Research, Oct 2018
 # evaluate DSTC-task2 submissions. https://github.com/DSTC-MSR-NLP/DSTC7-End-to-End-Conversation-Modeling
 
+from util import *
 from metrics import *
 from tokenizers import *
 
@@ -15,16 +16,14 @@ def extract_cells(path_in, path_hash):
 	return cells
 
 
-def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False, vshuman=False):
+def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False, vshuman=True):
 	cells_hyp = extract_cells(raw_hyp, path_hash)
 	cells_ref = extract_cells(raw_ref, path_hash)
 	if not os.path.exists(fld_out):
 		os.makedirs(fld_out)
 
 	def _clean(s):
-		if clean == 'heavy':
-			return heavy_clean(s)
-		elif clean == 'light':
+		if clean:
 			return clean_str(s)
 		else:
 			return s
@@ -42,6 +41,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 		for k in keys:
 			L = len(cells_ref[k])
 			for i in range(L):
+				# if one ref == hyp, replace this ref by another ref which != hyp
 				if cells_ref[k][i].split('|')[1] == cells_hyp[k][-1]:
 					for j in range(L):
 						if cells_ref[k][j].split('|')[1] != cells_hyp[k][-1]:
@@ -69,13 +69,13 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 
 def eval_one_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
-	clean=False, vshuman=False, PRINT=True):
+	clean=False, vshuman=True, PRINT=True):
 
 	print('evaluating '+submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
-		fld_out += '_%s_cleaned'%clean
+		fld_out += '_cleaned'
 	path_hyp, path_refs = extract_hyp_refs(submitted, multi_ref, keys, fld_out, n_refs, clean=clean, vshuman=vshuman)
 	nist, bleu, meteor, entropy, div, avg_len = nlp_metrics(path_refs, path_hyp, fld_out, n_lines=n_lines)
 	
@@ -94,7 +94,9 @@ def eval_one_system(submitted,
 	return [n_lines] + nist + bleu + [meteor] + entropy + div + [avg_len]
 
 
-def eval_all_systems(flds, path_report='dstc/report.tsv', keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, clean=False, n_lines=None, vshuman=False):
+def eval_all_systems(flds, path_report='dstc/report.tsv', 
+	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None, 
+	clean=False, vshuman=True):
 	# evaluate all systems (*.txt) in each folder in `flds`
 
 	with open(path_report, 'w') as f:
@@ -119,16 +121,17 @@ def eval_all_systems(flds, path_report='dstc/report.tsv', keys='dstc/keys.2k.txt
 
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	parser.add_argument('submitted')				# if '*', eval all teams listed in dstc/teams.txt
-										# elif endswith '.txt', eval this single file
-										# else, eval all *.txt in folder `submitted_fld`
 
-	parser.add_argument('--clean', '-c', default='no')		# 'no', 'light', or 'heavy'
-	parser.add_argument('--n_lines', '-n', type=int, default=-1)	# eval all lines (default) or top n_lines (e.g., for fast debugging)
-	parser.add_argument('--n_refs', '-r', type=int, default=6)	# number of references
-	parser.add_argument('--vshuman', '-v', type=bool, default=False) # whether one of the systems is human (i.e., == ref), 
-	                                                                 # in which case we need to remove human output from refs
+	parser = argparse.ArgumentParser()
+	parser.add_argument('submitted')	# if '*', eval all teams listed in dstc/teams.txt
+	                                    # elif endswith '.txt', eval this single file
+	                                    # else, eval all *.txt in folder `submitted_fld`
+
+	parser.add_argument('--clean', '-c', action='store_true')     # whether to clean ref and hyp before eval
+	parser.add_argument('--n_lines', '-n', type=int, default=-1)  # eval all lines (default) or top n_lines (e.g., for fast debugging)
+	parser.add_argument('--n_refs', '-r', type=int, default=6)    # number of references
+	parser.add_argument('--vshuman', '-v', type=str2bool, default='true') # whether one of the systems is human (i.e., == ref), 
+	                                                                      # in which case we need to remove human output from refs
 	args = parser.parse_args()
 
 	if args.n_lines < 0:
@@ -137,9 +140,12 @@ if __name__ == '__main__':
 		n_lines = args.n_lines	# just eval top n_lines
 
 	if args.submitted.endswith('.txt'):
-		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs)
+		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
 	else:
-		fname_report = 'report_ref%i_%sclean.tsv'%(args.n_refs, args.clean)
+		fname_report = 'report_ref%i'%args.n_refs
+		if args.clean:
+			fname_report += '_cleaned'
+		fname_report += '.tsv'
 		if args.submitted == '*':
 			flds = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
 			path_report = 'dstc/' + fname_report
