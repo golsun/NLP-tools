@@ -123,7 +123,7 @@ def eval_all_systems(flds, path_report='dstc/report.tsv',
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('submitted')	# if '*', eval all teams listed in dstc/teams.txt
+	parser.add_argument('submitted')	# if 'all', eval all teams listed in dstc/teams.txt
 	                                    # elif endswith '.txt', eval this single file
 	                                    # else, eval all *.txt in folder `submitted_fld`
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 		if args.clean:
 			fname_report += '_cleaned'
 		fname_report += '.tsv'
-		if args.submitted == '*':
+		if args.submitted == 'all':
 			flds = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
 			path_report = 'dstc/' + fname_report
 		else:
