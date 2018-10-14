@@ -37,24 +37,16 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 	with open(path_hyp, 'w', encoding='utf-8') as f:
 		f.write(unicode('\n'.join(lines)))
 	
-	if vshuman:
-		for k in keys:
-			L = len(cells_ref[k])
-			for i in range(L):
-				# if one ref == hyp, replace this ref by another ref which != hyp
-				if cells_ref[k][i].split('|')[1] == cells_hyp[k][-1]:
-					for j in range(L):
-						if cells_ref[k][j].split('|')[1] != cells_hyp[k][-1]:
-							cells_ref[k][i] = cells_ref[k][j]
-							break
-
 	lines = []
 	for _ in range(n_refs):
 		lines.append([])
 	for k in keys:
 		refs = cells_ref[k]
 		for i in range(n_refs):
-			idx = i % len(refs)
+			if vshuman:
+				idx = 1 + (i % len(refs-1))
+			else:
+				idx = i % len(refs)
 			lines[i].append(_clean(refs[idx].split('|')[1]))
 
 	path_refs = []
