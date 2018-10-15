@@ -42,7 +42,6 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 		lines.append([])
 	for k in keys:
 		refs = cells_ref[k]
-		print(refs)
 		for i in range(n_refs):
 			idx = i % len(refs)
 			if idx == vshuman:
