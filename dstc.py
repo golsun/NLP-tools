@@ -62,7 +62,7 @@ def eval_one_system(submitted,
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
 	clean=False, vshuman=-1, PRINT=True):
 
-	print('evaluating '+submitted)
+	print('evaluating %s' % submitted)
 
 	fld_out = submitted.replace('.txt','')
 	if clean:
@@ -85,9 +85,7 @@ def eval_one_system(submitted,
 	return [n_lines] + nist + bleu + [meteor] + entropy + div + [avg_len]
 
 
-def eval_all_systems(files, path_report='dstc/report.tsv', 
-	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None, 
-	clean=False, vshuman=False):
+def eval_all_systems(files, path_report, keys, multi_ref, n_refs=6, n_lines=None, clean=False, vshuman=False):
 	# evaluate all systems (*.txt) in each folder `files`
 
 	with open(path_report, 'w') as f:
@@ -114,13 +112,13 @@ def eval_all_systems(files, path_report='dstc/report.tsv',
 					with open(path_report, 'a') as f:
 						f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
-	print('report saved to: '+path_report)
+	print('report saved to: '+path_report, file=sys.stderr)
 
 
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('submitted')	# if 'all', eval all teams listed in dstc/teams.txt
+	parser.add_argument('submitted')	# if 'all' or '*', eval all teams listed in dstc/teams.txt
 	                                    # elif endswith '.txt', eval this single file
 	                                    # else, eval all *.txt in folder `submitted_fld`
 
@@ -129,6 +127,10 @@ if __name__ == '__main__':
 	parser.add_argument('--n_refs', '-r', type=int, default=6)    # number of references
 	parser.add_argument('--vshuman', '-v', type=int, default='1') # when evaluating against human performance (N in refN.txt that should be removed) 
 	                                                                      # in which case we need to remove human output from refs
+	parser.add_argument('--refs', '-g', default='dstc/test.refs')
+	parser.add_argument('--keys', '-k', default='dstc/keys.2k.txt')
+	parser.add_argument('--teams', '-i', type=str, default='dstc/teams.txt')
+	parser.add_argument('--report', '-o', type=str, default=None)
 	args = parser.parse_args()
 	print('Args: %s\n' % str(args), file=sys.stderr)
 
@@ -144,10 +146,12 @@ if __name__ == '__main__':
 		if args.clean:
 			fname_report += '_cleaned'
 		fname_report += '.tsv'
-		if args.submitted == 'all':
-			files = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
+		if args.submitted == 'all' or args.submitted == '*':
+			files = ['dstc/' + line.strip('\n') for line in open(args.teams)]
 			path_report = 'dstc/' + fname_report
 		else:
 			files = [args.submitted]
 			path_report = args.submitted + '/' + fname_report
-		eval_all_systems(files, path_report, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
+		if args.report != None:
+			path_report = args.report
+		eval_all_systems(files, path_report, keys=args.keys, multi_ref=args.refs, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
