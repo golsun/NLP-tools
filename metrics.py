@@ -127,7 +127,6 @@ def calc_len(path, n_lines):
 
 
 def calc_diversity(path_hyp):
-	# by Michel Galley
 	tokens = [0.0,0.0]
 	types = [defaultdict(int),defaultdict(int)]
 	for line in open(path_hyp, encoding='utf-8'):
@@ -149,7 +148,6 @@ def nlp_metrics(path_refs, path_hyp, fld_out='temp',  n_lines=None):
 	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_lines)
 	return nist, bleu, meteor, entropy, div, avg_len
-
 
 
 def _write_merged_refs(paths_in, path_out, n_lines=None):

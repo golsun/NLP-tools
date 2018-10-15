@@ -16,7 +16,7 @@ def extract_cells(path_in, path_hash):
 	return cells
 
 
-def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False, vshuman=True):
+def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False, vshuman=-1):
 	cells_hyp = extract_cells(raw_hyp, path_hash)
 	cells_ref = extract_cells(raw_ref, path_hash)
 	if not os.path.exists(fld_out):
@@ -42,11 +42,11 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 		lines.append([])
 	for k in keys:
 		refs = cells_ref[k]
+		print(refs)
 		for i in range(n_refs):
-			if vshuman:
-				idx = 1 + (i % len(refs-1))
-			else:
-				idx = i % len(refs)
+			idx = i % len(refs)
+			if idx == vshuman:
+			    idx = (idx + 1) % len(refs)
 			lines[i].append(_clean(refs[idx].split('|')[1]))
 
 	path_refs = []
@@ -61,7 +61,7 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 
 def eval_one_system(submitted, 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
-	clean=False, vshuman=True, PRINT=True):
+	clean=False, vshuman=-1, PRINT=True):
 
 	print('evaluating '+submitted)
 
@@ -86,10 +86,10 @@ def eval_one_system(submitted,
 	return [n_lines] + nist + bleu + [meteor] + entropy + div + [avg_len]
 
 
-def eval_all_systems(flds, path_report='dstc/report.tsv', 
+def eval_all_systems(files, path_report='dstc/report.tsv', 
 	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None, 
-	clean=False, vshuman=True):
-	# evaluate all systems (*.txt) in each folder in `flds`
+	clean=False, vshuman=False):
+	# evaluate all systems (*.txt) in each folder `files`
 
 	with open(path_report, 'w') as f:
 		f.write('\t'.join(
@@ -101,13 +101,19 @@ def eval_all_systems(flds, path_report='dstc/report.tsv',
 				['div1','div2','avg_len']
 			) + '\n')
 
-	for fld in flds:
-		for fname in os.listdir(fld):
-			if fname.endswith('.txt'):
-				submitted = fld + '/' + fname
-				results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman, PRINT=False)
-				with open(path_report, 'a') as f:
-					f.write('\t'.join(map(str, [submitted] + results)) + '\n')
+	for fl in files:
+		if fl.endswith('.txt'):
+			submitted = fl
+			results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman, PRINT=False)
+			with open(path_report, 'a') as f:
+				f.write('\t'.join(map(str, [submitted] + results)) + '\n')
+		else:
+			for fname in os.listdir(fl):
+				if fname.endswith('.txt'):
+					submitted = fl + '/' + fname
+					results = eval_one_system(submitted, keys=keys, multi_ref=multi_ref, n_refs=n_refs, clean=clean, n_lines=n_lines, vshuman=vshuman, PRINT=False)
+					with open(path_report, 'a') as f:
+						f.write('\t'.join(map(str, [submitted] + results)) + '\n')
 
 	print('report saved to: '+path_report)
 
@@ -122,9 +128,10 @@ if __name__ == '__main__':
 	parser.add_argument('--clean', '-c', action='store_true')     # whether to clean ref and hyp before eval
 	parser.add_argument('--n_lines', '-n', type=int, default=-1)  # eval all lines (default) or top n_lines (e.g., for fast debugging)
 	parser.add_argument('--n_refs', '-r', type=int, default=6)    # number of references
-	parser.add_argument('--vshuman', '-v', type=str2bool, default='true') # whether one of the systems is human (i.e., == ref), 
+	parser.add_argument('--vshuman', '-v', type=int, default='1') # when evaluating against human performance (N in refN.txt that should be removed) 
 	                                                                      # in which case we need to remove human output from refs
 	args = parser.parse_args()
+	print('Args: %s\n' % str(args), file=sys.stderr)
 
 	if args.n_lines < 0:
 		n_lines = None	# eval all lines
@@ -139,9 +146,9 @@ if __name__ == '__main__':
 			fname_report += '_cleaned'
 		fname_report += '.tsv'
 		if args.submitted == 'all':
-			flds = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
+			files = ['dstc/' + line.strip('\n') for line in open('dstc/teams.txt')]
 			path_report = 'dstc/' + fname_report
 		else:
-			flds = [args.submitted]
+			files = [args.submitted]
 			path_report = args.submitted + '/' + fname_report
-		eval_all_systems(flds, path_report, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
+		eval_all_systems(files, path_report, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
