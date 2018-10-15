@@ -128,7 +128,7 @@ if __name__ == '__main__':
 	parser.add_argument('--vshuman', '-v', type=int, default='1') # when evaluating against human performance (N in refN.txt that should be removed) 
 	                                                                      # in which case we need to remove human output from refs
 	parser.add_argument('--refs', '-g', default='dstc/test.refs')
-	parser.add_argument('--keys', '-k', default='dstc/keys.2k.txt')
+	parser.add_argument('--keys', '-k', default='keys/test.2k.txt')
 	parser.add_argument('--teams', '-i', type=str, default='dstc/teams.txt')
 	parser.add_argument('--report', '-o', type=str, default=None)
 	args = parser.parse_args()
