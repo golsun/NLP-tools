@@ -1,12 +1,15 @@
 # author: Xiang Gao @ Microsoft Research, Oct 2018
 # clean and tokenize natural language text
 
+import re
 from util import *
 from nltk.tokenize import TweetTokenizer
 
-
 def clean_str(txt):
+	#print("in=[%s]" % txt)
 	txt = txt.lower()
+	txt = re.sub('^',' ', txt)
+	txt = re.sub('$',' ', txt)
 
 	# url and tag
 	words = []
@@ -18,11 +21,11 @@ def clean_str(txt):
 	txt = ' '.join(words)
 
 	# remove markdown URL
-	txt = txt.replace('] ( __url__ )',' ')
+	txt = re.sub(r'\[([^\]]*)\] \( *__url__ *\)', r'\1', txt)
 
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
-	txt = re.sub(r"[^A-Za-z0-9():,.!?' ]", " ", txt)
+	txt = re.sub(r"[^A-Za-z0-9():,.!?\"\']", " ", txt)
 	txt = re.sub('URL','__url__',txt)	
 
 	# contraction
@@ -33,9 +36,13 @@ def clean_str(txt):
 	txt = txt.replace(" can't ", " can n't ")
 	for a in add_space:
 		txt = txt.replace(a+' ', ' '+a+' ')
+
+	txt = re.sub(r'^\s+', '', txt)
+	txt = re.sub(r'\s+$', '', txt)
+	txt = re.sub(r'\s+', ' ', txt) # remove extra spaces
 	
-	# remove un-necessary space
-	return ' '.join(txt.split())
+	#print("out=[%s]" % txt)
+	return txt
 
 
 if __name__ == '__main__':
