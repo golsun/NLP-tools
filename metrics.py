@@ -110,9 +110,9 @@ def calc_entropy(path_hyp, n_lines=None):
 			break
 
 	for n in range(4):
-		total = sum(counter[n].values())
+		total = sum(counter[n].values())+ 1e-9
 		for v in counter[n].values():
-			etp_score[n] += - v /total * (np.log(v) - np.log(total))
+			etp_score[n] += - 1.0 * v /total * (np.log(v) - np.log(total))
 
 	return etp_score
 
@@ -136,8 +136,8 @@ def calc_diversity(path_hyp):
 				ngram = ' '.join(words[idx:idx+n+1])
 				types[n][ngram] = 1
 				tokens[n] += 1
-	div1 = len(types[0].keys())/tokens[0]
-	div2 = len(types[1].keys())/tokens[1]
+	div1 = 1. * len(types[0].keys())/tokens[0]
+	div2 = 1. * len(types[1].keys())/tokens[1]
 	return [div1, div2]
 
 
