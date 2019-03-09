@@ -74,7 +74,7 @@ def calc_meteor(path_refs, path_hyp, fld_out='temp', n_lines=None, pretokenized=
 	_write_merged_refs(path_refs, path_merged_refs)
 
 	cmd = [
-			'java', '-Xmx3g', '-Xms3g',	# heapsize of 1G to avoid OutOfMemoryError
+			'java', '-Xmx7g', '-Xms7g',	# heapsize of 7G to avoid OutOfMemoryError
 			'-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', 
 			path_hyp, path_merged_refs, 
 			'-r', '%i'%len(path_refs), 	# refCount 

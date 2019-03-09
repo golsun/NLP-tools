@@ -3,3 +3,5 @@ temp
 __pycache__
 3rdparty
 dstc
+dstc.py
+keys
