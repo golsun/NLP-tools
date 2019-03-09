@@ -9,7 +9,7 @@ else:
 
 def makedirs(fld):
 	if not os.path.exists(fld):
-		makedirs(fld)
+		os.makedirs(fld)
 
 
 def str2bool(s):
