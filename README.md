@@ -26,7 +26,7 @@ clean_str(s)
 # Requirement
 * Tested with Python 2.7 and 3.6
 * Please **download** the following 3rd-party packages and save in a new folder `3rdparty`
-	* **mteval-v14c.pl** (ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14.pl) to compute [NIST](http://www.mt-archive.info/HLT-2002-Doddington.pdf). You may need to install the following [perl](https://www.perl.org/get.html) modules (e.g. by `cpan install`): XML:Twig, Sort:Naturally and String:Util 
+	* **mteval-v14c.pl** (ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-v14c.pl) to compute [NIST](http://www.mt-archive.info/HLT-2002-Doddington.pdf). You may need to install the following [perl](https://www.perl.org/get.html) modules (e.g. by `cpan install`): XML:Twig, Sort:Naturally and String:Util 
 	* [**meteor-1.5**](http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz) to compute [METEOR](http://www.cs.cmu.edu/~alavie/METEOR/index.html). It requires [JAVA](https://www.java.com/en/download/help/download_options.xml)
 
 
