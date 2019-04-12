@@ -117,7 +117,7 @@ def calc_entropy(path_hyp, n_lines=None):
 	return etp_score
 
 
-def calc_len(path, n_lines):
+def calc_len(path, n_lines=None):
 	l = []
 	for line in open(path, encoding='utf8'):
 		l.append(len(line.strip('\n').split()))
