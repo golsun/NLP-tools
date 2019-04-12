@@ -74,7 +74,7 @@ def calc_meteor(path_refs, path_hyp, fld_out='temp', n_lines=None, pretokenized=
 	_write_merged_refs(path_refs, path_merged_refs)
 
 	cmd = [
-			'java', '-Xmx1g',	# heapsize of 1G to avoid OutOfMemoryError
+			'java', '-Xmx7g', '-Xms7g',	# heapsize of 7G to avoid OutOfMemoryError
 			'-jar', '3rdparty/meteor-1.5/meteor-1.5.jar', 
 			path_hyp, path_merged_refs, 
 			'-r', '%i'%len(path_refs), 	# refCount 
@@ -110,9 +110,9 @@ def calc_entropy(path_hyp, n_lines=None):
 			break
 
 	for n in range(4):
-		total = sum(counter[n].values())
+		total = sum(counter[n].values())+ 1e-9
 		for v in counter[n].values():
-			etp_score[n] += - v /total * (np.log(v) - np.log(total))
+			etp_score[n] += - 1.0 * v /total * (np.log(v) - np.log(total))
 
 	return etp_score
 
@@ -136,8 +136,8 @@ def calc_diversity(path_hyp):
 				ngram = ' '.join(words[idx:idx+n+1])
 				types[n][ngram] = 1
 				tokens[n] += 1
-	div1 = len(types[0].keys())/tokens[0]
-	div2 = len(types[1].keys())/tokens[1]
+	div1 = 1. * len(types[0].keys())/tokens[0]
+	div2 = 1. * len(types[1].keys())/tokens[1]
 	return [div1, div2]
 
 

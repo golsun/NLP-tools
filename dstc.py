@@ -58,7 +58,9 @@ def extract_hyp_refs(raw_hyp, raw_ref, path_hash, fld_out, n_refs=6, clean=False
 	return path_hyp, path_refs
 
 
-def eval_one_system(submitted, keys, multi_ref, n_refs=6, n_lines=None, clean=False, vshuman=-1, PRINT=True):
+def eval_one_system(submitted, 
+	keys='dstc/keys.2k.txt', multi_ref='dstc/test.refs', n_refs=6, n_lines=None,
+	clean=False, vshuman=-1, PRINT=True):
 
 	print('evaluating %s' % submitted)
 
@@ -126,7 +128,7 @@ if __name__ == '__main__':
 	parser.add_argument('--vshuman', '-v', type=int, default='1') # when evaluating against human performance (N in refN.txt that should be removed) 
 	                                                                      # in which case we need to remove human output from refs
 	parser.add_argument('--refs', '-g', default='dstc/test.refs')
-	parser.add_argument('--keys', '-k', default='dstc/keys.2k.txt')
+	parser.add_argument('--keys', '-k', default='keys/test.2k.txt')
 	parser.add_argument('--teams', '-i', type=str, default='dstc/teams.txt')
 	parser.add_argument('--report', '-o', type=str, default=None)
 	args = parser.parse_args()
@@ -138,7 +140,7 @@ if __name__ == '__main__':
 		n_lines = args.n_lines	# just eval top n_lines
 
 	if args.submitted.endswith('.txt'):
-		eval_one_system(args.submitted, keys=args.keys, multi_ref=args.refs, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
+		eval_one_system(args.submitted, clean=args.clean, n_lines=n_lines, n_refs=args.n_refs, vshuman=args.vshuman)
 	else:
 		fname_report = 'report_ref%i'%args.n_refs
 		if args.clean:
