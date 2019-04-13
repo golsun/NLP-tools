@@ -16,7 +16,7 @@ nist, bleu, meteor, entropy, diversity, avg_len = nlp_metrics(
 ```
 * **tokenizatioin**: clean string and deal with punctation, contraction, url, mention, tag, etc
 ```python
-from tokenizers import clean_str
+from data_prepare import clean_str
 s = " I don't know:). how about this?https://github.com"
 clean_str(s)
 

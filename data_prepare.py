@@ -234,3 +234,7 @@ def build_vocab(fld, n_max=2e6, size=1e4, min_freq=50, fname='train.txt', includ
 		names.append('%s\t%.3f'%(k, -neg_ratio))
 	with open(fld + '/vocab_names.txt', 'w', encoding='utf-8') as f:
 		f.write('\n'.join(names))
+
+
+
+
