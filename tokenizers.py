@@ -45,13 +45,28 @@ def clean_str(txt):
 	return txt
 
 
-if __name__ == '__main__':
-	ss = [
-		" I don't know:). how about this?https://github.com/golsun/deep-RL-time-series",
-		"please try [ GitHub ] ( https://github.com )",
-		]
-	for s in ss:
-		print(s)
-		print(clean_str(s))
-		print()
-	
+def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
+	print(path)
+	sum_src_len = 0
+	sum_tgt_len = 0
+	sum_src_turns = 0
+	n = 0
+	for line in open(path, encoding='utf-8'):
+		n += 1
+		line = line.strip('\n')
+		if src_tgt_delimiter is not None:
+			src, tgt = line.split(src_tgt_delimiter)
+			sum_src_turns += len(src.split(turns_delimiter))
+			sum_src_len += len(src.split())
+		else:
+			tgt = line
+		sum_tgt_len += len(tgt.split())
+		if n%1e6 == 0:
+			print('checked %i M'%(n/1e6))
+
+	print(path)
+	print('total sample = %i (%.3f M)'%(n, n/1e6))
+	print('src_turns = %.2f'%np.mean(sum_src_turns/n))
+	print('src_len = %.2f'%np.mean(sum_src_len/n))
+	print('tgt_len = %.2f'%np.mean(sum_tgt_len/n))
+

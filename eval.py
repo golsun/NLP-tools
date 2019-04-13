@@ -55,17 +55,3 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False):
     with open(path_out,'a') as f:
         f.write('\t'.join(header) + '\n')
         f.write('\t'.join(value) + '\n')
-
-
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('model_name', type=str)
-    parser.add_argument('--ckpt_name', type=str, default='')
-    parser.add_argument('--src_as_ref', '-s', action='store_true')
-    args = parser.parse_args()
-
-    root = 'C:/Users/xiag/Documents/GitHub/cut_the_noise/out/'
-    eval_tsv(root + '/%s/'%args.model_name, args.ckpt_name, src_as_ref=args.src_as_ref)
-
