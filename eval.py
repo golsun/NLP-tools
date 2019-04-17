@@ -30,20 +30,22 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False):
     with open('temp/hyp.txt', 'w', encoding='utf-8') as f:
         f.write('\n'.join(hyps))
 
-    nist, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
+    nist, sbleu, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
 	  path_refs=["temp/ref.txt"], 
 	  path_hyp="temp/hyp.txt")
 
-    header = ['ckpt', 'src_as_ref'] + [
+    header = ['fld', 'ckpt', 'src_as_ref'] + [
                 'nist%i'%i for i in range(1, 5)] + [
+                'sbleu%i'%i for i in range(1, 5)] + [
                 'bleu%i'%i for i in range(1, 5)] + [
                 'meteor'] + [
                 'entropy%i'%i for i in range(1, 5)] + [
                 'distinct%i'%i for i in range(1, 3)] + [
                 'avg_len'] + [
                 ]
-    value = [ckpt_name, str(src_as_ref)] + [
+    value = [fld.split('/')[-1], ckpt_name, str(src_as_ref)] + [
                 '%.4f'%x for x in nist] + [
+                '%.4f'%x for x in sbleu] + [
                 '%.4f'%x for x in bleu] + [
                 '%.4f'%meteor] + [
                 '%.4f'%x for x in entropy] + [
