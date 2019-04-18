@@ -5,6 +5,7 @@ import re
 from util import *
 from collections import defaultdict
 from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.nist_score import sentence_nist
 
 
 def calc_nist_bleu(path_refs, path_hyp, fld_out='temp', n_lines=None):
@@ -142,30 +143,39 @@ def calc_diversity(path_hyp):
 	return [div1, div2]
 
 
-def calc_nltk_bleu(path_refs, path_hyp, n_lines):
-	assert(len(path_refs) == 1)
+def calc_nltk_nist_bleu(path_refs, path_hyp, n_lines):
+	# not smoothed. calc_pl_nist_bleu is smoothed
+
+	assert(len(path_refs) == 1)		# not implemented for multi-ref yet
 	refs = [line.strip('\n') for line in open(path_refs[0], encoding='utf-8')]
 	hyps = [line.strip('\n') for line in open(path_hyp, encoding='utf-8')]
 	bleu = []
+	nist = []
 	ngram_weights = dict()
 	for ngram in [1, 2, 3, 4]:
 		ngram_weights[ngram] = [1./ngram] * ngram
 	for ngram in ngram_weights:
-		score = []
+		_bleu = []
+		_nist = []
 		for i in range(len(hyps)):
-			score.append(sentence_bleu([refs[i].split()], hyps[i].split(), weights=ngram_weights[ngram]))
-		bleu.append(np.mean(score))
-	return bleu
+			_bleu.append(sentence_bleu([refs[i].split()], hyps[i].split(), weights=ngram_weights[ngram]))
+			try:
+				_nist.append(sentence_nist([refs[i].split()], hyps[i].split(), n=ngram))
+			except ZeroDivisionError:
+				_nist.append(0.)
+		bleu.append(np.mean(_bleu))
+		nist.append(np.mean(_nist))
+	return nist, bleu
 
 
 def nlp_metrics(path_refs, path_hyp, fld_out='temp',  n_lines=None):
-	nist, sbleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
-	bleu = calc_nltk_bleu(path_refs, path_hyp, n_lines)
+	snist, sbleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
+	nist, bleu = calc_nltk_nist_bleu(path_refs, path_hyp, n_lines)
 	meteor = calc_meteor(path_refs, path_hyp, fld_out, n_lines)
 	entropy = calc_entropy(path_hyp, n_lines)
 	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_lines)
-	return nist, sbleu, bleu, meteor, entropy, div, avg_len
+	return snist, sbleu, nist, bleu, meteor, entropy, div, avg_len
 
 
 def _write_merged_refs(paths_in, path_out, n_lines=None):

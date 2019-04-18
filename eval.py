@@ -39,7 +39,7 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1):
     with open('temp/hyp.txt', 'w', encoding='utf-8') as f:
         f.write('\n'.join(hyps))
 
-    nist, sbleu, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
+    nist, sbleu, _, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
 	  path_refs=["temp/ref.txt"], 
 	  path_hyp="temp/hyp.txt")
 
