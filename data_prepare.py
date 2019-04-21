@@ -10,9 +10,12 @@ EOS_token = '_EOS_'	# end of resp
 SOS_token = '_SOS_'	# start of resp
 UNK_token = '_UNK_'	# unkown 
 
-def clean_str(txt):
-	#print("in=[%s]" % txt)
+def clean_str(txt, lang='en'):
+	assert(lang in ['en','fr'])
+
 	txt = txt.lower()
+	for c in '«»“”':
+		txt = re.sub(c, '"', txt)
 	txt = re.sub('^',' ', txt)
 	txt = re.sub('$',' ', txt)
 
@@ -30,24 +33,29 @@ def clean_str(txt):
 
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
-	txt = re.sub(r"[^A-Za-z0-9():,.!?\"\']", " ", txt)
+	txt = re.sub(r"[^A-Za-zÀ-ÿ0-9():,.!?\"\']", " ", txt)
 	txt = re.sub('URL','__url__',txt)	
 
 	# contraction
-	add_space = ["'s", "'m", "'re", "n't", "'ll","'ve","'d","'em"]
 	tokenizer = TweetTokenizer(preserve_case=False)
-	txt = ' ' + ' '.join(tokenizer.tokenize(txt)) + ' '
-	txt = txt.replace(" won't ", " will n't ")
-	txt = txt.replace(" can't ", " can n't ")
-	for a in add_space:
-		txt = txt.replace(a+' ', ' '+a+' ')
+	if lang == 'en':
+		txt = ' ' + ' '.join(tokenizer.tokenize(txt)) + ' '
+		add_space = ["'s", "'m", "'re", "n't", "'ll","'ve","'d","'em"]
+		txt = txt.replace(" won't ", " will n't ")
+		txt = txt.replace(" can't ", " can n't ")
+		for a in add_space:
+			txt = txt.replace(a+' ', ' '+a+' ')
+	elif lang == 'fr':
+		ww = []
+		for w in tokenizer.tokenize(txt):
+			if "'" in w:
+				ss = w.split("'")
+				ww += [s+"'" for s in ss[:-1]] + [ss[-1]]
+			else:
+				ww.append(w)
+		txt = ' '.join(ww)
 
-	txt = re.sub(r'^\s+', '', txt)
-	txt = re.sub(r'\s+$', '', txt)
-	txt = re.sub(r'\s+', ' ', txt) # remove extra spaces
-	
-	#print("out=[%s]" % txt)
-	return txt
+	return ' '.join(txt.split())	# remove extra space
 
 
 def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
@@ -236,5 +244,25 @@ def build_vocab(fld, n_max=2e6, size=1e4, min_freq=50, fname='train.txt', includ
 		f.write('\n'.join(names))
 
 
+
+def tokenize_file(path, lang='en'):
+	lines = []
+	n = 0
+	path_out = path + '.tokenized'
+	open(path_out, 'w', encoding='utf-8') 
+	for line in open(path, encoding='utf-8'):
+		ss = line.strip('\n').split('\t')
+		cc = [clean_str(s, lang=lang) for s in ss]
+		lines.append('\t'.join(cc))
+		n += 1
+		if n % 1e5 == 0:
+			print('processed %.1f M'%(n/1e6))
+			with open(path_out, 'a', encoding='utf-8') as f:
+				f.write('\n'.join(lines) + '\n')
+			lines = []
+	print('totally processed %.1f M'%(n/1e6))
+	with open(path_out, 'a', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+			
 
 
