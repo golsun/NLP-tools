@@ -266,3 +266,96 @@ def tokenize_file(path, lang='en'):
 			
 
 
+def load_vocab(path):
+	with io.open(path, encoding='utf-8') as f:
+		lines = f.readlines()
+
+	index2token = dict()
+	token2index = dict()
+	for i, line in enumerate(lines):
+		token = line.strip('\n').strip()
+		index2token[i + 1] = token 			# start from 1, as 0 reserved for PAD
+		token2index[token] = i + 1
+
+	assert(SOS_token in token2index)
+	assert(EOS_token in token2index)
+	assert(UNK_token in token2index)
+	return index2token, token2index
+
+
+def text2num(fld, name, path_vocab=None, n_max=-1):
+	path_in = fld + '/%s.txt'%name
+	if not os.path.exists(path_in):
+		print('no such file: '+path_in)
+		return
+
+	if path_vocab is None:
+		path_vocab = fld + '/vocab.txt'
+	_, token2index = load_vocab(path_vocab)
+	path_out = fld + '/%s.num'%name
+	open(path_out, 'w')
+	lines = []
+	n = 0
+	for line in open(path_in, encoding='utf-8'):
+		n += 1
+		if n%1e5 == 0 and n>1:
+			print('processed %.1fM lines'%(n/1e6))
+			with open(path_out, 'a', encoding='utf-8') as f:
+				f.write('\n'.join(lines) + '\n')
+			lines = []
+
+		tt = line.strip('\n').split('\t')
+		if len(tt) == 1:
+			num = []
+			for word in tt[0].split():
+				num.append(token2index.get(word, token2index[UNK_token]))
+			lines.append(' '.join(map(str, num)))
+
+		else:
+			src, tgt = tt
+			src_num = []
+			for word in src.split():
+				src_num.append(token2index.get(word, token2index[UNK_token]))
+
+			tgt_num = []
+			for word in tgt.split():
+				tgt_num.append(token2index.get(word, token2index[UNK_token]))
+
+			lines.append(' '.join(map(str, src_num)) + '\t' + ' '.join(map(str, tgt_num)))
+
+		if n == n_max:
+			break
+
+	print('total %.2fM'%(n/1e6))
+	with open(path_out, 'a', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+
+
+def combine_file(fld, fname_src, fname_tgt, fname_out):
+	f_src = open(fld + '/' + fname_src)
+	f_tgt = open(fld + '/' + fname_tgt)
+	path_out = fld + '/' + fname_out
+	open(path_out, 'w')
+
+	lines = []
+	n = 0
+	while True:
+		src = f_src.readline()
+		tgt = f_tgt.readline()
+		if len(src) == 0 or len(tgt) == 0:
+			break
+
+		src = src.strip('\n').strip()
+		tgt = tgt.strip('\n').strip()
+
+		n += 1
+		lines.append(src + '\t' + tgt)
+		if n % 1e5 == 0:
+			print('combined %.1f M lines'%(n/1e6))
+			with open(path_out, 'a') as f:
+				f.write('\n'.join(lines) + '\n')
+			lines = []
+	print('totally combined %.i lines'%n)
+	with open(path_out, 'a') as f:
+		f.write('\n'.join(lines))
+
