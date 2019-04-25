@@ -1,49 +1,64 @@
 from metrics import *
 import sys
 
-def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1):
+def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1, sub='test', max_n=4000, n_ref=1, hyp_first=True):
+    if src_as_ref:
+        assert(path_extra_ref is None)
 
-    if ckpt_name == '':
-        ckpt = 0
-        for fname in os.listdir(fld):
-            if fname.endswith('_test.tsv'):
-                ckpt = max(ckpt, int(fname.split('-')[1].split('_')[0]))
-        ckpt_name = 'ckpt-%i'%ckpt
-
-    path_tsv = fld + '%s_test.tsv'%ckpt_name
+    path_tsv = fld + '%s_%s.tsv'%(ckpt_name, sub)
     print(path_tsv)
+    srcs = []
     hyps = []
     refs = []
+    n_refs = []
     n_parrot = 0
     for i, line in enumerate(open(path_tsv, encoding='utf-8')):
-        src, ref, hyp = line.strip('\n').split('\t')
+        ss = line.strip('\n').split('\t')
+        src = ss[0]
+        if hyp_first:
+            hyp = ss[1]
+            _refs = ss[2:]
+        else:
+            hyp = ss[-1]
+            _refs = ss[1:-1]
 
         if parrot_threshold > 0:
             parrot = src.split(' EOS ')[-1].strip() + ' _EOS_'
-            bleu = sentence_bleu([ref.split()], parrot.split(), weights=[1./4]*4)
+            bleu = sentence_bleu([refs[-1][0].split()], parrot.split(), weights=[1./4]*4)
             if bleu > parrot_threshold:
                 n_parrot += 1
                 continue
 
+        srcs.append(src)
         hyps.append(hyp)
         if src_as_ref:
-            refs.append(src)
+            refs.append([src])
         else:
-            refs.append(ref)
-        if i == 4000:
+            refs.append(_refs)
+        n_refs.append(len(refs[-1]))
+        if i == max_n:
             break
 
-    with open('temp/ref.txt', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(refs))
-            
+    print('n_ref_desired: %i'%n_ref)
+    print('n_ref_actual: min=%i, max=%i, avg=%.1f'%(min(n_refs), max(n_refs), np.mean(n_refs)))
+
+    path_refs = []
+    for r in range(n_ref):
+        _refs = [refs[i][r%n_refs[i]] for i in range(len(hyps))]
+        _path = 'temp/ref%i.txt'%r
+        with open(_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(_refs))
+        path_refs.append(_path)
+                
     with open('temp/hyp.txt', 'w', encoding='utf-8') as f:
         f.write('\n'.join(hyps))
 
-    nist, sbleu, _, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
-	  path_refs=["temp/ref.txt"], 
+    print('evaluating')
+    nist, sbleu, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
+	  path_refs=path_refs, 
 	  path_hyp="temp/hyp.txt")
 
-    header = ['config', 'ckpt', 'src_as_ref'] + [
+    header = ['config', 'ckpt', 'src_as_ref', 'n_ref'] + [
                 'nist%i'%i for i in range(1, 5)] + [
                 'sbleu%i'%i for i in range(1, 5)] + [
                 'bleu%i'%i for i in range(1, 5)] + [
@@ -53,7 +68,9 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1):
                 'avg_len'] + [
                 ]
     config = fld.strip('/').split('/')[-1]
-    value = [config, ckpt_name, str(src_as_ref)] + [
+    if sub != 'test':
+        config += '(%s)'%sub
+    value = [config, ckpt_name, str(src_as_ref), str(n_ref)] + [
                 '%.4f'%x for x in nist] + [
                 '%.4f'%x for x in sbleu] + [
                 '%.4f'%x for x in bleu] + [

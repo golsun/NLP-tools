@@ -143,39 +143,49 @@ def calc_diversity(path_hyp):
 	return [div1, div2]
 
 
-def calc_nltk_nist_bleu(path_refs, path_hyp, n_lines):
+def calc_nltk_bleu(path_refs, path_hyp, n_lines):
 	# not smoothed. calc_pl_nist_bleu is smoothed
 
-	assert(len(path_refs) == 1)		# not implemented for multi-ref yet
-	refs = [line.strip('\n') for line in open(path_refs[0], encoding='utf-8')]
+	refs = []
+	for r, path in enumerate(path_refs):
+		refs.append([])
+		refs[r] = [line.strip('\n') for line in open(path, encoding='utf-8')]
+
 	hyps = [line.strip('\n') for line in open(path_hyp, encoding='utf-8')]
 	bleu = []
-	nist = []
+	#nist = []
 	ngram_weights = dict()
 	for ngram in [1, 2, 3, 4]:
 		ngram_weights[ngram] = [1./ngram] * ngram
 	for ngram in ngram_weights:
 		_bleu = []
-		_nist = []
+		#_nist = []
 		for i in range(len(hyps)):
-			_bleu.append(sentence_bleu([refs[i].split()], hyps[i].split(), weights=ngram_weights[ngram]))
-			try:
-				_nist.append(sentence_nist([refs[i].split()], hyps[i].split(), n=ngram))
-			except ZeroDivisionError:
-				_nist.append(0.)
+			multi_ref = [refs[r][i].split() for r in range(len(refs))]
+			_bleu.append(sentence_bleu(multi_ref, hyps[i].split(), weights=ngram_weights[ngram]))
+			#try:
+			#	_nist.append(sentence_nist(multi_ref, hyps[i].split(), n=ngram))
+			#except ZeroDivisionError:
+			#	_nist.append(0.)
 		bleu.append(np.mean(_bleu))
-		nist.append(np.mean(_nist))
-	return nist, bleu
+		#nist.append(np.mean(_nist))
+	#return nist, bleu
+	return bleu
 
 
 def nlp_metrics(path_refs, path_hyp, fld_out='temp',  n_lines=None):
-	snist, sbleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
-	nist, bleu = calc_nltk_nist_bleu(path_refs, path_hyp, n_lines)
+	print('calc_nist_bleu')
+	nist, sbleu = calc_nist_bleu(path_refs, path_hyp, fld_out, n_lines)
+	print('calc_nltk_bleu')
+	bleu = calc_nltk_bleu(path_refs, path_hyp, n_lines)
+	print('calc_meteor')
 	meteor = calc_meteor(path_refs, path_hyp, fld_out, n_lines)
+	#meteor = np.nan
+	print('calc others')
 	entropy = calc_entropy(path_hyp, n_lines)
 	div = calc_diversity(path_hyp)
 	avg_len = calc_len(path_hyp, n_lines)
-	return snist, sbleu, nist, bleu, meteor, entropy, div, avg_len
+	return nist, sbleu, bleu, meteor, entropy, div, avg_len
 
 
 def _write_merged_refs(paths_in, path_out, n_lines=None):
