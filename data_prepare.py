@@ -6,9 +6,9 @@ from util import *
 from nltk.tokenize import TweetTokenizer
 import shutil, queue
 
-EOS_token = '_EOS_'	# end of resp
-SOS_token = '_SOS_'	# start of resp
-UNK_token = '_UNK_'	# unkown 
+EOS_token = '_EOS_' # end of resp
+SOS_token = '_SOS_' # start of resp
+UNK_token = '_UNK_' # unkown 
 
 def clean_str(txt, lang='en'):
 	assert(lang in ['en','fr'])
@@ -34,7 +34,7 @@ def clean_str(txt, lang='en'):
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
 	txt = re.sub(r"[^A-Za-zÀ-ÿ0-9():,.!?\"\']", " ", txt)
-	txt = re.sub('URL','__url__',txt)	
+	txt = re.sub('URL','__url__',txt)   
 
 	# contraction
 	tokenizer = TweetTokenizer(preserve_case=False)
@@ -55,7 +55,7 @@ def clean_str(txt, lang='en'):
 				ww.append(w)
 		txt = ' '.join(ww)
 
-	return ' '.join(txt.split())	# remove extra space
+	return ' '.join(txt.split())    # remove extra space
 
 
 def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
@@ -84,16 +84,18 @@ def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
 	print('tgt_len = %.2f'%np.mean(sum_tgt_len/n))
 
 
-def filter_by_turn(path, min_src_turn=1, max_src_turn=None):
-	path_out = path+'.turn(%s,%s)'%(min_src_turn,max_src_turn)
-	open(path_out, 'w')
+def filter_by_turn(path_in, min_src_turn=1, max_src_turn=None):
+	path_out = path_in + '.srcturn%i'%min_src_turn
+	if max_src_turn is not None and max_src_turn != min_src_turn:
+		path_in += '-%i'%max_n_ref
+	open(path_out, 'w', encoding='utf-8')
 	n = 0
 	m = 0
 	lines = []
-	for line in open(path, encoding='utf-8'):
+	for line in open(path_in, encoding='utf-8'):
 		n += 1
 		line = line.strip('\n')
-		src, tgt = line.split('\t')
+		src = line.split('\t')[0]
 		n_turn = len(src.split(' EOS '))
 		if n_turn >= min_src_turn and (max_src_turn is None or n_turn <= max_src_turn):
 			lines.append(line)
@@ -103,6 +105,34 @@ def filter_by_turn(path, min_src_turn=1, max_src_turn=None):
 				with open(path_out, 'a', encoding='utf-8') as f:
 					f.write('\n'.join(lines) + '\n')
 				lines = []
+	print('finally, picked %.3f M from %.3f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
+	with open(path_out, 'a', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+
+
+def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
+	from nltk.translate.bleu_score import sentence_bleu
+	path_out = path+'.parrot%i(%.2f,%.2f)'%(ngram, min_parrot, max_parrot)
+	open(path_out, 'w',encoding='utf-8')
+	n = 0
+	m = 0
+	lines = []
+	for line in open(path, encoding='utf-8'):
+		n += 1
+		line = line.strip('\n')
+		ss = line.split('\t')
+		hyp = ss[0].split()     # use src as hyp as this is a parrot system
+		refs = [s.split() for s in ss[1:]]
+		parrot = sentence_bleu(refs, hyp, weights=[1./ngram]*ngram)
+		if parrot >= min_parrot and parrot <= max_parrot:
+			m += 1
+			lines.append(line)
+			if m%1e5 == 0:
+				print('picked %.1f M from %.1f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
+				with open(path_out, 'a', encoding='utf-8') as f:
+					f.write('\n'.join(lines) + '\n')
+				lines = []
+	print('finally, picked %.3f M from %.3f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
 	with open(path_out, 'a', encoding='utf-8') as f:
 		f.write('\n'.join(lines))
 
@@ -274,7 +304,7 @@ def load_vocab(path):
 	token2index = dict()
 	for i, line in enumerate(lines):
 		token = line.strip('\n').strip()
-		index2token[i + 1] = token 			# start from 1, as 0 reserved for PAD
+		index2token[i + 1] = token          # start from 1, as 0 reserved for PAD
 		token2index[token] = i + 1
 
 	assert(SOS_token in token2index)
@@ -359,3 +389,53 @@ def combine_file(fld, fname_src, fname_tgt, fname_out):
 	with open(path_out, 'a') as f:
 		f.write('\n'.join(lines))
 
+
+
+
+def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
+	path_out = path_in + '.ref%i'%min_n_ref
+	if max_n_ref is not None and max_n_ref != min_n_ref:
+		path_in += '-%i'%max_n_ref
+	if multi_col:
+		path_out += '.multicol'
+
+	open(path_out, 'w', encoding='utf-8')
+	print(path_out)
+
+	m_src = 0
+	n_src = 0
+	m_tgt = 0
+	n_tgt = 0
+	prev = ''
+	refs = set()
+
+	for line in open(path_in, encoding='utf-8'):
+		line = line.strip('\n')
+		n_tgt += 1
+		if n_tgt%1e5 == 0:
+			print('processed %.3fM lines, selected %.3fM'%(n_tgt/1e6, m_tgt/1e6))
+		src, tgt = line.split('\t')
+
+		if src != prev:
+			n_src += 1
+			if len(refs) >= min_n_ref:
+				m_src += 1
+				m_tgt += len(refs)
+				if multi_col:
+					lines = ['\t'.join([prev] + list(refs))]
+				else:
+					lines = [(prev + '\t' + ref) for ref in refs]
+				with open(path_out, 'a', encoding='utf-8') as f:
+					f.write('\n'.join(lines) + '\n')
+			refs = set()
+			prev = src
+		if max_n_ref is None or len(refs) < max_n_ref:
+			refs.add(tgt)
+
+	if len(refs) >= min_n_ref:
+		m_tgt += len(refs)
+		lines = [(prev + '\t' + ref) for ref in refs]
+		with open(path_out, 'a', encoding='utf-8') as f:
+			f.write('\n'.join(lines))
+
+	print('finally, processed %.3fM lines, selected %.3fM'%(n_tgt/1e6, m_tgt/1e6))

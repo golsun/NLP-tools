@@ -159,18 +159,3 @@ def create_human_csv(path_in, path_out):
     with open(path_out, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     print('done. see '+path_out)
-
-
-
-def check_parrot(path_tsv):
-    tuples = []
-    for line in open(path_tsv, encoding='utf-8'):
-        src, ref, _ = line.strip('\n').split('\t')
-        parrot = src.split(' EOS ')[-1].strip() + ' _EOS_'
-        bleu = sentence_bleu([ref.split()], parrot.split(), weights=[1./4]*4)
-        tuples.append((bleu, src, ref))
-
-    tuples = sorted(tuples, reverse=True)
-    lines = ['\t'.join(['%.6f'%bleu, src, ref]) for bleu, src, ref in tuples]
-    with open(path_tsv + '.parrot_bleu', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines))
