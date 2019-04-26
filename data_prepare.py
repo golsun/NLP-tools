@@ -145,6 +145,55 @@ def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
 	return path_out
 
 
+def filter_bland_ref(path, path_ngram, crit_top=100):
+	top = []
+	for line in open(path_ngram, encoding='utf-8'):
+		top.append(line.strip('\n'))
+		if len(top) == crit_top:
+			break
+	ngram = len(top[0].split())
+	top = set(top)
+	path_out = path+'.top%ibland%igram'%(crit_top, ngram)
+
+	lines = []
+	n = 0
+	m = 0
+	n_line = 0
+	n0ref = 0
+	removed = []
+	for line in open(path, encoding='utf-8'):
+		n_line += 1
+		line = line.strip('\n')
+		ss = line.split('\t')
+		refs = []
+		for ref in ss[1:]:
+			gg = word_ngrams(ref, ngram)
+			if len(top & gg) == 0:
+				refs.append(ref)
+			else:
+				removed.append(ref)
+		n += len(ss) - 1
+		m += len(refs)
+		if len(refs) > 0:
+			lines.append('\t'.join([ss[0]] + refs))
+		else:
+			n0ref += 1
+			lines.append('\t'.join(ss[:2]))
+
+	with open(path_out, 'w', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+	#with open(path_out+'.removed', 'w', encoding='utf-8') as f:
+	#	f.write('\n'.join(removed))
+
+	print('finally, picked %.1f k from %.1f k refs (%.3f)'%(m/1e3, n/1e3, m/n))
+	print('%i line do not have any non-bland ref'%n0ref)
+	print('overall ref: %.4f'%(n/n_line))
+	print('selected ref: %.4f'%(m/len(lines)))
+	return path_out
+
+
+
+
 def combine_files(paths_in, path_out):
 	open(path_out,'w')
 	total_n = 0
@@ -449,3 +498,35 @@ def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
 
 	print('finally, processed %.3fM lines, selected %.3fM'%(n_tgt/1e6, m_tgt/1e6))
 	return path_out
+
+
+def is_word(token):
+	for c in token:
+		if c.isalpha():
+			return True
+	return False
+
+def word_ngrams(s, ngram):
+	ww = []
+	for w in s.split():
+		if is_word(w):
+			ww.append(w)
+	ngrams = set()
+	for i in range(len(ww) - ngram):
+		ngrams.add(' '.join(ww[i:i+ngram]))
+	return ngrams
+
+
+def top_ngram(path_in, ngram=3, max_num=int(1e4)):
+	from collections import Counter
+	counter = Counter()
+	for line in open(path_in, encoding='utf-8'):
+		refs = line.strip('\n').split('\t')[1:]
+		for ref in refs:
+			ngrams = word_ngrams(ref, ngram)
+			for g in ngrams:
+				counter[g] += 1
+
+	top = [g for g, _ in counter.most_common(max_num)]
+	with open(path_in+'.%igram'%ngram, 'w', encoding='utf-8') as f:
+		f.write('\n'.join(top))
