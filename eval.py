@@ -99,9 +99,11 @@ def create_parrot_csv(path_in, path_out):
 
     lines = []
     for line in open(path_in, encoding='utf-8'):
-        src, ref, _ = line.strip('\n').split('\t')
+        ss = line.strip('\n').split('\t')
+        src = ss[0]
         parrot = src.split(' EOS ')[-1].strip() + ' _EOS_'
-        lines.append('\t'.join([src, ref, parrot]))
+        ss[1] = parrot
+        lines.append('\t'.join(ss))
     with open(path_out, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     print('done. see '+path_out)
@@ -112,9 +114,11 @@ def create_const_csv(path_in, path_out, hyp="i do n't know"):
     # use a constant reply
 
     lines = []
+    hyp = hyp.strip() + ' _EOS_'
     for line in open(path_in, encoding='utf-8'):
-        src, ref, _ = line.strip('\n').split('\t')
-        lines.append('\t'.join([src, ref, hyp.strip() + ' _EOS_']))
+        ss = line.strip('\n').split('\t')
+        ss[1] = hyp
+        lines.append('\t'.join(ss))
     with open(path_out, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     print('done. see '+path_out)
@@ -124,22 +128,38 @@ def create_rand_csv(path_in, path_out, hyp="i do n't know"):
     # in/out is tsv: src \t ref \t hyp
     # use a constant reply
 
-    srcs = []
-    refs = []
+    hyps = []
+    cells = []
     for line in open(path_in, encoding='utf-8'):
-        src, ref, _ = line.strip('\n').split('\t')
-        srcs.append(src)
-        refs.append(ref)
+        ss = line.strip('\n').split('\t')
+        hyps.append(ss[-1])
+        cells.append(ss)
 
-    hyps = refs[:]
     np.random.seed(9)
     np.random.shuffle(hyps)
     lines = []
     for i in range(len(hyps)):
-        lines.append('\t'.join([srcs[i], refs[i], hyps[i]]))
+        ss = cells[i]
+        ss[1] = hyps[i]
+        lines.append('\t'.join(ss))
     with open(path_out, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     print('done. see '+path_out)
+
+
+def create_human_csv(path_in, path_out):
+
+    lines = []
+    for line in open(path_in, encoding='utf-8'):
+        ss = line.strip('\n').split('\t')
+        ix_hyp, ix_rep = np.random.choice(len(ss)-2, 2, replace=False)
+        ss[1] = ss[ix_hyp]
+        ss[ix_hyp] = ss[ix_rep]
+        lines.append('\t'.join(ss))
+    with open(path_out, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print('done. see '+path_out)
+
 
 
 def check_parrot(path_tsv):
