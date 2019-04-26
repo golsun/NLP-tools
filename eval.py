@@ -1,46 +1,50 @@
 from metrics import *
 import sys
 
-def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1, sub='test', max_n=4000, n_ref=1, hyp_first=True):
-    if src_as_ref:
-        assert(path_extra_ref is None)
-
-    path_tsv = fld + '%s_%s.tsv'%(ckpt_name, sub)
-    print(path_tsv)
-    srcs = []
+def eval_tsv(fld, ckpt_name, sub='test', max_n=3000, n_ref=1, path_refs=None):
+    path_hyp = fld + '%s_%s.tsv'%(ckpt_name, sub)
+    print(path_hyp)
     hyps = []
     refs = []
     n_refs = []
-    n_parrot = 0
-    for i, line in enumerate(open(path_tsv, encoding='utf-8')):
-        ss = line.strip('\n').split('\t')
-        src = ss[0]
-        if hyp_first:
-            hyp = ss[1]
-            _refs = ss[2:]
-        else:
-            hyp = ss[-1]
-            _refs = ss[1:-1]
+    src_matching = 0.
 
-        if parrot_threshold > 0:
-            parrot = src.split(' EOS ')[-1].strip() + ' _EOS_'
-            bleu = sentence_bleu([refs[-1][0].split()], parrot.split(), weights=[1./4]*4)
-            if bleu > parrot_threshold:
-                n_parrot += 1
-                continue
+    f_hyp = open(path_hyp, encoding='utf-8')
+    if path_refs is not None:
+        f_refs = open(path_refs, encoding='utf-8')
+    else:
+        f_refs = None
 
-        srcs.append(src)
+    n = 0
+    while True:
+        line = f_hyp.readline()
+        if len(line) == 0:
+            break
+        src, ref, hyp = line.strip('\n').split('\t')
         hyps.append(hyp)
-        if src_as_ref:
-            refs.append([src])
+
+        if f_refs is not None:
+            ss = f_refs.readline().strip('\n').split('\t')
+            src_matching += sentence_bleu([src.split()], ss[0].split(), weights=[1./4]*4)
+            refs.append(ss[1:])
         else:
-            refs.append(_refs)
+            refs.append([ref])
         n_refs.append(len(refs[-1]))
-        if i == max_n:
+        n += 1
+        if n == max_n:
             break
 
+    n_sample = len(hyps)
+    print('n_sample: %i'%n_sample)
     print('n_ref_desired: %i'%n_ref)
     print('n_ref_actual: min=%i, max=%i, avg=%.1f'%(min(n_refs), max(n_refs), np.mean(n_refs)))
+
+    if path_refs is not None:
+        src_matching = src_matching/n
+        print('src_matching: %.4f'%(src_matching))
+        if src_matching < 0.6:
+            print('f_hyp and f_refs does not match on src')
+            return
 
     path_refs = []
     for r in range(n_ref):
@@ -58,7 +62,7 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1, sub='test', 
 	  path_refs=path_refs, 
 	  path_hyp="temp/hyp.txt")
 
-    header = ['config', 'ckpt', 'src_as_ref', 'n_ref'] + [
+    header = ['config', 'ckpt', 'n_sample', 'n_ref'] + [
                 'nist%i'%i for i in range(1, 5)] + [
                 'sbleu%i'%i for i in range(1, 5)] + [
                 'bleu%i'%i for i in range(1, 5)] + [
@@ -70,7 +74,7 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1, sub='test', 
     config = fld.strip('/').split('/')[-1]
     if sub != 'test':
         config += '(%s)'%sub
-    value = [config, ckpt_name, str(src_as_ref), str(n_ref)] + [
+    value = [config, ckpt_name, str(n_sample), str(n_ref)] + [
                 '%.4f'%x for x in nist] + [
                 '%.4f'%x for x in sbleu] + [
                 '%.4f'%x for x in bleu] + [
@@ -80,17 +84,12 @@ def eval_tsv(fld, ckpt_name, src_as_ref=False, parrot_threshold=-1, sub='test', 
                 '%.4f'%avg_len] + [
                 ]
 
-    if parrot_threshold > 0:
-        path_out = fld + '/eval_no_parrot%.2f.tsv'%parrot_threshold
-    else:
-        path_out = fld + '/eval.tsv'
+    path_out = fld + '/eval.tsv'
     with open(path_out,'a') as f:
         f.write('\t'.join(header) + '\n')
         f.write('\t'.join(value) + '\n')
 
-    print('done. %i samples evaluated'%len(hyps))
-    if parrot_threshold > 0:
-        print('removed %i parrot samples'%n_parrot)
+    print('done')
 
 
 def create_parrot_csv(path_in, path_out):

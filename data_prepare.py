@@ -108,6 +108,7 @@ def filter_by_turn(path_in, min_src_turn=1, max_src_turn=None):
 	print('finally, picked %.3f M from %.3f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
 	with open(path_out, 'a', encoding='utf-8') as f:
 		f.write('\n'.join(lines))
+	return path_out
 
 
 def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
@@ -117,6 +118,8 @@ def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
 	n = 0
 	m = 0
 	lines = []
+	sum_parrot = 0.
+	selected_parrot = 0.
 	for line in open(path, encoding='utf-8'):
 		n += 1
 		line = line.strip('\n')
@@ -124,17 +127,22 @@ def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
 		hyp = ss[0].split()     # use src as hyp as this is a parrot system
 		refs = [s.split() for s in ss[1:]]
 		parrot = sentence_bleu(refs, hyp, weights=[1./ngram]*ngram)
+		sum_parrot += parrot
 		if parrot >= min_parrot and parrot <= max_parrot:
 			m += 1
+			selected_parrot += parrot
 			lines.append(line)
 			if m%1e5 == 0:
 				print('picked %.1f M from %.1f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
 				with open(path_out, 'a', encoding='utf-8') as f:
 					f.write('\n'.join(lines) + '\n')
 				lines = []
-	print('finally, picked %.3f M from %.3f M lines (%.3f)'%(m/1e6, n/1e6, m/n))
 	with open(path_out, 'a', encoding='utf-8') as f:
 		f.write('\n'.join(lines))
+	print('finally, picked %.1f k from %.1f k lines (%.3f)'%(m/1e3, n/1e3, m/n))
+	print('overall parrot: %.4f'%(sum_parrot/n))
+	print('selected parrot: %.4f'%(selected_parrot/m))
+	return path_out
 
 
 def combine_files(paths_in, path_out):
@@ -393,11 +401,12 @@ def combine_file(fld, fname_src, fname_tgt, fname_out):
 
 
 def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
-	path_out = path_in + '.ref%i'%min_n_ref
-	if max_n_ref is not None and max_n_ref != min_n_ref:
-		path_in += '-%i'%max_n_ref
+	path_out = path_in[:]
 	if multi_col:
 		path_out += '.multicol'
+	path_out +='.ref%i'%min_n_ref
+	if max_n_ref is not None and max_n_ref != min_n_ref:
+		path_in += '-%i'%max_n_ref
 
 	open(path_out, 'w', encoding='utf-8')
 	print(path_out)
@@ -439,3 +448,4 @@ def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
 			f.write('\n'.join(lines))
 
 	print('finally, processed %.3fM lines, selected %.3fM'%(n_tgt/1e6, m_tgt/1e6))
+	return path_out
