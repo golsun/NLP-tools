@@ -3,7 +3,7 @@ import sys
 
 def eval_tsv(fld, ckpt_name='', sub='test', max_n=3000, n_ref=1, path_refs=None, is_human=False, suffix=''):
     # path_hyp is a tsv file, each line is '\t'.join([src, ref, hyp])
-    # you can provide extra multi_ref via path_refs, where each line is '\t'.join([src, ref0, ref1, ref2])
+    # you can provide extra multi_ref via path_refs, where each line is '\t'.join([src, ref0, ref1, ref2, ...])
 
     path_hyp = fld
     if ckpt_name != '':
