@@ -1,8 +1,11 @@
 from metrics import *
 import sys
 
-def eval_tsv(fld, ckpt_name, sub='test', max_n=3000, n_ref=1, path_refs=None, is_human=False, suffix=''):
-    path_hyp = fld + '%s_%s.tsv'%(ckpt_name, sub)
+def eval_tsv(fld, ckpt_name='', sub='test', max_n=3000, n_ref=1, path_refs=None, is_human=False, suffix=''):
+    path_hyp = fld
+    if ckpt_name != '':
+        path_hyp += ckpt_name + '_'
+    path_hyp += sub + '.tsv'
     print(path_hyp)
     hyps = []
     refs = []
@@ -21,6 +24,7 @@ def eval_tsv(fld, ckpt_name, sub='test', max_n=3000, n_ref=1, path_refs=None, is
         if len(line) == 0:
             break
         src, ref, hyp = line.strip('\n').split('\t')
+        src = src.strip(' EOS')
         hyps.append(hyp.replace('_EOS_','').strip())
         ref = ref.replace('_EOS_','').strip()
 
@@ -162,3 +166,22 @@ def create_human_csv(path_in, path_out):
     with open(path_out, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     print('done. see '+path_out)
+
+
+def align_src(path_actual, path_desired):
+    desired = [line.strip('\n').split('\t')[0].strip() for line in open(path_desired, encoding='utf-8')]
+    d = dict()
+    for line in open(path_actual, encoding='utf-8'):
+        k = line.strip('\n').split('\t')[0].strip()
+        d[k] = line.strip('\n')
+
+    lines = []
+    for k in desired:
+        if k in d:
+            lines.append(d[k])
+        else:
+            break
+
+    print('aligned %i / %i lines'%(len(lines), len(desired)))
+    with open(path_actual + '.aligned', 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))

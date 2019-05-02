@@ -111,9 +111,12 @@ def filter_by_turn(path_in, min_src_turn=1, max_src_turn=None):
 	return path_out
 
 
-def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
+def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2, which='any'):
+	assert(which in ['any','last'])
 	from nltk.translate.bleu_score import sentence_bleu
 	path_out = path+'.parrot%i(%.2f,%.2f)'%(ngram, min_parrot, max_parrot)
+	if which != 'any':
+		path_out += which
 	open(path_out, 'w',encoding='utf-8')
 	n = 0
 	m = 0
@@ -124,9 +127,14 @@ def filter_by_parrot(path, min_parrot=0., max_parrot=1., ngram=2):
 		n += 1
 		line = line.strip('\n')
 		ss = line.split('\t')
-		hyp = ss[0].split()     # use src as hyp as this is a parrot system
-		refs = [s.split() for s in ss[1:]]
-		parrot = sentence_bleu(refs, hyp, weights=[1./ngram]*ngram)
+		src_turns = ss[0].split(' EOS ')
+		if which == 'last':
+			src_turns = [src_turns[-1]]
+		parrot = 0.
+		for src_turn in src_turns:
+			hyp = src_turn.split()     # use last turn of src as hyp as this is a parrot system
+			refs = [s.split() for s in ss[1:]]
+			parrot = max(parrot, sentence_bleu(refs, hyp, weights=[1./ngram]*ngram))
 		sum_parrot += parrot
 		if parrot >= min_parrot and parrot <= max_parrot:
 			m += 1
@@ -456,6 +464,10 @@ def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
 	path_out +='.ref%i'%min_n_ref
 	if max_n_ref is not None and max_n_ref != min_n_ref:
 		path_in += '-%i'%max_n_ref
+
+	if os.path.exists(path_out):
+		print('already exists: '+path_out)
+		return
 
 	open(path_out, 'w', encoding='utf-8')
 	print(path_out)
