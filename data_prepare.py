@@ -542,3 +542,15 @@ def top_ngram(path_in, ngram=3, max_num=int(1e4)):
 	top = [g for g, _ in counter.most_common(max_num)]
 	with open(path_in+'.%igram'%ngram, 'w', encoding='utf-8') as f:
 		f.write('\n'.join(top))
+
+
+
+
+def combine_files(paths, path_out, use_EOF=True):
+	lines = []
+	for path in paths:
+		lines += open(path, encoding='utf-8').readlines()
+		if use_EOF:
+			lines.append('_EOF_')
+	with open(path_out, 'w', encoding='utf-8') as f:
+		f.write('\n'.join([line.strip('\n') for line in lines]))
