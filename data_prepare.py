@@ -14,6 +14,7 @@ def clean_str(txt, lang='en'):
 	assert(lang in ['en','fr'])
 
 	txt = txt.lower()
+	txt = re.sub('eos','EOS',txt)
 	for c in '«»“”':
 		txt = re.sub(c, '"', txt)
 	txt = re.sub('^',' ', txt)
@@ -37,7 +38,7 @@ def clean_str(txt, lang='en'):
 	txt = re.sub('URL','__url__',txt)   
 
 	# contraction
-	tokenizer = TweetTokenizer(preserve_case=False)
+	tokenizer = TweetTokenizer(preserve_case=True)	# already lowercased but want to maintain, e.g., _EOS_
 	if lang == 'en':
 		txt = ' ' + ' '.join(tokenizer.tokenize(txt)) + ' '
 		add_space = ["'s", "'m", "'re", "n't", "'ll","'ve","'d","'em"]
@@ -58,10 +59,10 @@ def clean_str(txt, lang='en'):
 	return ' '.join(txt.split())    # remove extra space
 
 
-def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
+def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS', max_n=-1):
 	print(path)
-	sum_src_len = 0
-	sum_tgt_len = 0
+	src_lens = []
+	tgt_lens = []
 	sum_src_turns = 0
 	n = 0
 	for line in open(path, encoding='utf-8'):
@@ -70,18 +71,23 @@ def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS'):
 		if src_tgt_delimiter is not None:
 			src, tgt = line.split(src_tgt_delimiter)
 			sum_src_turns += len(src.split(turns_delimiter))
-			sum_src_len += len(src.split())
+			src_lens.append(len(src.split()))
 		else:
 			tgt = line
-		sum_tgt_len += len(tgt.split())
+		tgt_lens.append(len(tgt.split()))
 		if n%1e6 == 0:
 			print('checked %i M'%(n/1e6))
+		if n == max_n:
+			break
+
+	src_len_90 = sorted(src_lens)[int(n*0.9)]
+	tgt_len_90 = sorted(tgt_lens)[int(n*0.9)]
 
 	print(path)
-	print('total sample = %i (%.3f M)'%(n, n/1e6))
-	print('src_turns = %.2f'%np.mean(sum_src_turns/n))
-	print('src_len = %.2f'%np.mean(sum_src_len/n))
-	print('tgt_len = %.2f'%np.mean(sum_tgt_len/n))
+	print('total checked = %i (%.3f M)'%(n, n/1e6))
+	print('src_turns: avg = %.2f'%(sum_src_turns/n))
+	print('src_len: avg = %.2f, 90perc = %i'%(np.mean(src_lens), src_len_90))
+	print('tgt_len: avg = %.2f, 90perc = %i'%(np.mean(tgt_lens), tgt_len_90))
 
 
 def filter_by_turn(path_in, min_src_turn=1, max_src_turn=None):
@@ -340,14 +346,18 @@ def build_vocab(fld, n_max=2e6, size=1e4, min_freq=50, fname='train.txt', includ
 
 
 
-def tokenize_file(path, lang='en'):
+def tokenize_file(path, lang='en', col='all', n_max=-1):
 	lines = []
 	n = 0
 	path_out = path + '.tokenized'
 	open(path_out, 'w', encoding='utf-8') 
 	for line in open(path, encoding='utf-8'):
 		ss = line.strip('\n').split('\t')
-		cc = [clean_str(s, lang=lang) for s in ss]
+		if col == 'all':
+			cc = [clean_str(s, lang=lang) for s in ss]
+		else:
+			cc = ss[:]
+			cc[col] = clean_str(cc[col], lang=lang)
 		lines.append('\t'.join(cc))
 		n += 1
 		if n % 1e5 == 0:
@@ -355,6 +365,8 @@ def tokenize_file(path, lang='en'):
 			with open(path_out, 'a', encoding='utf-8') as f:
 				f.write('\n'.join(lines) + '\n')
 			lines = []
+		if n == n_max:
+			break
 	print('totally processed %.1f M'%(n/1e6))
 	with open(path_out, 'a', encoding='utf-8') as f:
 		f.write('\n'.join(lines))
@@ -554,3 +566,25 @@ def combine_files(paths, path_out, use_EOF=True):
 			lines.append('_EOF_')
 	with open(path_out, 'w', encoding='utf-8') as f:
 		f.write('\n'.join([line.strip('\n') for line in lines]))
+
+
+
+def dailydialog(path):
+	delimiter = '__eou__'
+	dialogs = open(path, encoding='utf-8').readlines()
+	# shuffle because originally was sorted by topic
+	np.random.seed(9)
+	np.random.shuffle(dialogs)
+	lines = []
+	for line in dialogs:
+		# some special bugs..
+		line = line.replace('...','__DOTS__')
+		line = line.replace('.','. ')
+		line = line.replace('__DOTS__','...')
+		turns = line.strip('\n').strip(delimiter).split(delimiter)
+		for i in range(1, len(turns)):
+			src = ' EOS '.join(turns[:i])
+			tgt = turns[i]
+			lines.append(src + '\t' + tgt)
+	with open(path+'.src_tgt', 'w', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
