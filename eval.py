@@ -195,6 +195,8 @@ def align_src(path_actual, path_desired):
 def eval_simple(path_hyp, path_refs, n_ref):
     # path_hyp is a file, each line is a hyp
     # path_refs is a tsv file, where each line is '\t'.join([src, ref0, ref1, ref2, ...])
+    # note the i-th line of path_hyp should correspond to the i-th line of path_refs
+    # n_ref is how many refs you want to use (if available less than n_ref, will repeatedly use some ref)
 
     print(path_hyp)
     hyps = open(path_hyp, encoding='utf-8').readlines()
