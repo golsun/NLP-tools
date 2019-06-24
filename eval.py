@@ -188,3 +188,71 @@ def align_src(path_actual, path_desired):
     print('aligned %i / %i lines'%(len(lines), len(desired)))
     with open(path_actual + '.aligned', 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
+
+
+
+
+def eval_simple(path_hyp, path_refs, n_ref):
+    # path_hyp is a file, each line is a hyp
+    # path_refs is a tsv file, where each line is '\t'.join([src, ref0, ref1, ref2, ...])
+
+    print(path_hyp)
+    hyps = open(path_hyp, encoding='utf-8').readlines()
+    refs = []
+    n_refs = []
+    for line in open(path_refs, encoding='utf-8'):
+        ss = line.strip('\n').split('\t')
+        refs.append(ss[1:])
+        n_refs.append(len(refs[-1]))
+    
+    assert(len(refs) == len(hyps))
+    n_sample = len(hyps)
+    print('n_sample: %i'%n_sample)
+    print('n_ref_desired: %i'%n_ref)
+    print('n_ref_actual: min=%i, max=%i, avg=%.1f'%(min(n_refs), max(n_refs), np.mean(n_refs)))
+
+
+    path_refs = []
+    for r in range(n_ref):
+        _refs = [refs[i][r%n_refs[i]] for i in range(len(hyps))]
+        _path = 'temp/ref%i.txt'%r
+        with open(_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(_refs))
+        path_refs.append(_path)
+                
+    with open('temp/hyp.txt', 'w', encoding='utf-8') as f:
+        f.write('\n'.join(hyps))
+
+    print('evaluating')
+    nist, sbleu, bleu, meteor, entropy, distinct, avg_len = nlp_metrics(
+      path_refs=path_refs, 
+      path_hyp="temp/hyp.txt")
+
+    header = ['config', 'test', 'ckpt', 'n_sample', 'n_ref'] + [
+                'nist%i'%i for i in range(1, 5)] + [
+                'sbleu%i'%i for i in range(1, 5)] + [
+                'bleu%i'%i for i in range(1, 5)] + [
+                'meteor'] + [
+                'entropy%i'%i for i in range(1, 5)] + [
+                'distinct%i'%i for i in range(1, 3)] + [
+                'avg_len'] + [
+                ]
+    config = fld.strip('/').split('/')[-1] + suffix
+    value = [config, sub, ckpt_name, str(n_sample), '%.1f/%i'%(np.mean(n_refs), n_ref)] + [
+                '%.4f'%x for x in nist] + [
+                '%.4f'%x for x in sbleu] + [
+                '%.4f'%x for x in bleu] + [
+                '%.4f'%meteor] + [
+                '%.4f'%x for x in entropy] + [
+                '%.4f'%x for x in distinct] + [
+                '%.4f'%avg_len] + [
+                ]
+
+    path_out = fld + '/eval.tsv'
+    with open(path_out,'a') as f:
+        f.write('\t'.join(header) + '\n')
+        f.write('\t'.join(value) + '\n')
+
+    print('done' + '-'*20)
+    for k, v in zip(header, value):
+        print(' '*(15 - len(k)) + k + ': ' + v)
