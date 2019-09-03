@@ -26,7 +26,10 @@ def clean_str(txt, lang='en'):
 		i = word.find('http') 
 		if i >= 0:
 			word = word[:i] + ' ' + '__url__'
-		words.append(word.strip())
+		if word.startswith('@') and word.endswith('@'):
+			words.append('__tag__')
+		else:
+			words.append(word.strip())
 	txt = ' '.join(words)
 
 	# remove markdown URL
@@ -34,8 +37,11 @@ def clean_str(txt, lang='en'):
 
 	# remove illegal char
 	txt = re.sub('__url__','URL',txt)
+	txt = re.sub('__tag__','TAG',txt)
 	txt = re.sub(r"[^A-Za-zÀ-ÿ0-9():,.!?\"\']", " ", txt)
 	txt = re.sub('URL','__url__',txt)   
+	txt = re.sub('TAG','__tag__',txt)   
+
 
 	# contraction
 	tokenizer = TweetTokenizer(preserve_case=True)	# already lowercased but want to maintain, e.g., _EOS_
@@ -59,7 +65,7 @@ def clean_str(txt, lang='en'):
 	return ' '.join(txt.split())    # remove extra space
 
 
-def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS', max_n=-1):
+def dataset_statistics(path, src_tgt_delimiter='\t', turns_delimiter='EOS', max_n=2e6):
 	print(path)
 	src_lens = []
 	tgt_lens = []
@@ -587,4 +593,36 @@ def dailydialog(path):
 			tgt = turns[i]
 			lines.append(src + '\t' + tgt)
 	with open(path+'.src_tgt', 'w', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+
+
+def process_ParlAI(path):
+	lines = []
+	path_out = path + '.tokenized'
+	open(path_out, 'w', encoding='utf-8')
+
+	for i, line in enumerate(open(path, encoding='utf-8')):
+		src, tgt, _ = line.strip('\n').split('\t')
+		src = clean_str(src.replace('text:',''))
+		tgt = clean_str(tgt.replace('labels:',''))
+		lines.append(src + '\t' + tgt)
+		if i % 1e4 == 0:
+			print('processed %.2f M'%(i/1e6))
+			if len(lines) > 0:
+				with open(path_out, 'a', encoding='utf-8') as f:
+					f.write('\n'.join(lines) + '\n')
+			lines = []
+
+	print('processed %.2f M'%(i/1e6))
+	with open(path_out, 'a', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
+
+
+def extract_head(path, n=100):
+	lines = []
+	for line in open(path, encoding='utf-8'):
+		lines.append(line.strip('\n'))
+		if len(lines) == n:
+			break
+	with open(path+'.head', 'w', encoding='utf-8') as f:
 		f.write('\n'.join(lines))

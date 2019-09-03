@@ -192,7 +192,7 @@ def align_src(path_actual, path_desired):
 
 
 
-def eval_simple(path_hyp, path_refs, n_ref):
+def eval_simple(path_hyp, path_refs, path_out, n_ref):
     # path_hyp is a file, each line is a hyp
     # path_refs is a tsv file, where each line is '\t'.join([src, ref0, ref1, ref2, ...])
     # note the i-th line of path_hyp should correspond to the i-th line of path_refs
@@ -230,31 +230,5 @@ def eval_simple(path_hyp, path_refs, n_ref):
       path_refs=path_refs, 
       path_hyp="temp/hyp.txt")
 
-    header = ['config', 'test', 'ckpt', 'n_sample', 'n_ref'] + [
-                'nist%i'%i for i in range(1, 5)] + [
-                'sbleu%i'%i for i in range(1, 5)] + [
-                'bleu%i'%i for i in range(1, 5)] + [
-                'meteor'] + [
-                'entropy%i'%i for i in range(1, 5)] + [
-                'distinct%i'%i for i in range(1, 3)] + [
-                'avg_len'] + [
-                ]
-    config = fld.strip('/').split('/')[-1] + suffix
-    value = [config, sub, ckpt_name, str(n_sample), '%.1f/%i'%(np.mean(n_refs), n_ref)] + [
-                '%.4f'%x for x in nist] + [
-                '%.4f'%x for x in sbleu] + [
-                '%.4f'%x for x in bleu] + [
-                '%.4f'%meteor] + [
-                '%.4f'%x for x in entropy] + [
-                '%.4f'%x for x in distinct] + [
-                '%.4f'%avg_len] + [
-                ]
-
-    path_out = fld + '/eval.tsv'
-    with open(path_out,'a') as f:
-        f.write('\t'.join(header) + '\n')
-        f.write('\t'.join(value) + '\n')
-
-    print('done' + '-'*20)
-    for k, v in zip(header, value):
-        print(' '*(15 - len(k)) + k + ': ' + v)
+    print('nist',nist)
+    print('sbleu',sbleu)
