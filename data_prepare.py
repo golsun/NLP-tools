@@ -626,3 +626,46 @@ def extract_head(path, n=100):
 			break
 	with open(path+'.head', 'w', encoding='utf-8') as f:
 		f.write('\n'.join(lines))
+
+
+
+def process_ParlAI_personachat(path):
+	assert(path.endswith('_none_original.txt'))
+
+	def turns2line(turns):
+		src = ' [SEP] '.join(turns[:-1])
+		if len(src) > 500:
+			i = 500
+			while i > 0:
+				if src[-i] == ' ':
+					break
+				i -= 1
+			src = '[OMT] ' + src[-i:].strip()
+		tgt = turns[-1]
+		return src + '\t' + tgt
+
+	path_out = path + '.src_tgt'
+	open(path_out, 'w', encoding='utf-8')
+	lines = []
+	turns = []
+	n = 0
+	for line in open(path, encoding='utf-8'):
+		if line.startswith('1 '):
+			turns = []
+		ss = line.split('\t')
+		turns.append(' '.join(ss[0].split()[1:]))
+		if len(turns) > 1:
+			lines.append(turns2line(turns))
+
+		turns.append(ss[1])
+		lines.append(turns2line(turns))
+
+		n += 2
+		if n % 1e4 == 0:
+			with open(path_out, 'a', encoding='utf-8') as f:
+				f.write('\n'.join(lines) + '\n')
+			print('%.2fM'%(n/1e6))
+			lines = []
+
+	with open(path_out, 'a', encoding='utf-8') as f:
+		f.write('\n'.join(lines))
