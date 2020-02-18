@@ -474,6 +474,30 @@ def combine_file(fld, fname_src, fname_tgt, fname_out):
 
 
 
+def extract_tgt(fld, name):
+	lines = []
+	n = 0
+	path_out = fld + '/base_nonc_%s.num'%name
+	open(path_out, 'w')
+
+	def write_shuffled_lines(lines, final=''):
+		ii = list(range(len(lines)))
+		np.random.shuffle(ii)
+		with open(path_out, 'a', encoding='utf-8') as f:
+			f.write('\n'.join([lines[i] for i in ii]) + final)
+
+	for line in open(fld + '/%s.num'%name):
+		_, tgt = line.strip('\n').split('\t')
+		lines.append(tgt)
+		n += 1
+		if n%1e5 == 0:
+			print('processed %.2f M'%(n/1e6))
+			write_shuffled_lines(lines, final='\n')
+			lines = []
+	print('processed %.2f M'%(n/1e6))
+	write_shuffled_lines(lines, final='')
+
+	
 
 def extract_multi_ref(path_in, min_n_ref, max_n_ref=None, multi_col=True):
 	path_out = path_in[:]
